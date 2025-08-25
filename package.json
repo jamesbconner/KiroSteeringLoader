@@ -1,0 +1,86 @@
+{
+  "name": "kiro-steering-loader",
+  "displayName": "Kiro Steering Loader",
+  "description": "Load steering agent templates into Kiro projects",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "views": {
+      "kiro-steering": [
+        {
+          "id": "kiroSteeringLoader",
+          "name": "Steering Templates",
+          "when": "true"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "kiro-steering",
+          "title": "Kiro Steering",
+          "icon": "$(book)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "kiroSteeringLoader.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "kiroSteeringLoader.loadTemplate",
+        "title": "Load Template"
+      },
+      {
+        "command": "kiroSteeringLoader.setTemplatesPath",
+        "title": "Kiro Steering Loader: Set Templates Path",
+        "category": "Kiro Steering Loader"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "kiroSteeringLoader.refresh",
+          "when": "view == kiroSteeringLoader",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "kiroSteeringLoader.setTemplatesPath",
+          "when": "view == kiroSteeringLoader",
+          "group": "inline"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Kiro Steering Loader",
+      "properties": {
+        "kiroSteeringLoader.templatesPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the directory containing steering agent templates"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^4.9.4"
+  }
+}
