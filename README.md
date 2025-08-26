@@ -11,7 +11,7 @@ A Visual Studio Code extension that helps you load steering agent templates into
 
 ## Usage
 
-1. **Set Templates Path**: Settings>Extensions>Kiro Steering Loader.  Set to a local directory with steering templates.
+1. **Set Templates Path**: Settings>Extensions>Kiro Steering Loader.  Set to a local directory with steering templates.  Can also be set in the command palette as "Kiro Steering Loader: Set Templates Path", or by clicking the directory icon in the Kiro Loader view.
 2. **Browse Templates**: Click the Kiro Steering icon in the activity bar to view available templates
 3. **Load Templates**: Click on any template to load it into your current workspace's `.kiro/steering/` directory
 4. **Refresh**: Use the refresh button to update the template list after adding new templates
