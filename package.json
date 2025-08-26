@@ -2,14 +2,19 @@
   "name": "kiro-steering-loader",
   "displayName": "Kiro Steering Loader",
   "description": "Load steering agent templates into Kiro projects",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "publisher": "jamesbconner",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jamesbconner/KiroSteeringLoader.git"
+  },
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.75.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "views": {
@@ -43,13 +48,19 @@
       {
         "command": "kiroSteeringLoader.setTemplatesPath",
         "title": "Kiro Steering Loader: Set Templates Path",
-        "category": "Kiro Steering Loader"
+        "category": "Kiro Steering Loader",
+        "icon": "$(folder-opened)"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "kiroSteeringLoader.refresh",
+          "when": "view == kiroSteeringLoader",
+          "group": "navigation"
+        },
+        {
+          "command": "kiroSteeringLoader.setTemplatesPath",
           "when": "view == kiroSteeringLoader",
           "group": "navigation"
         }
