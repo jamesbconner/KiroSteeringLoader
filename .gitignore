@@ -5,3 +5,18 @@
 node_modules
 node_modules/*
 
+# Test Coverage and Results
+coverage/
+*.lcov
+test-results.json
+test-results.html
+e2e-results.json
+
+# VS Code Test
+.vscode-test/
+.vscode-test-web/
+
+# Test Artifacts
+tests/fixtures/temp/
+tests/fixtures/workspaces/temp-*
+
