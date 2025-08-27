@@ -18,6 +18,7 @@ export interface MockedFileSystem {
   readFileSync: MockedFunction<(path: string, encoding?: BufferEncoding) => string>;
   writeFileSync: MockedFunction<(path: string, data: string) => void>;
   mkdirSync: MockedFunction<(path: string, options?: { recursive?: boolean }) => void>;
+  rmSync: MockedFunction<(path: string, options?: { recursive?: boolean; force?: boolean }) => void>;
 }
 
 // Global mock file system state
@@ -197,13 +198,71 @@ const mockMkdirSync = vi.fn().mockImplementation((path: string, options?: { recu
   }
 });
 
+/**
+ * Mock implementation of fs.rmSync
+ */
+const mockRmSync = vi.fn().mockImplementation((path: string, options?: { recursive?: boolean; force?: boolean }): void => {
+  const normalized = normalizePath(path);
+  
+  // Check if path exists (unless force is true)
+  if (!options?.force && !fileExists(normalized) && !directoryExists(normalized)) {
+    throw new Error(`ENOENT: no such file or directory, rm '${path}'`);
+  }
+  
+  // Remove file if it exists
+  if (fileExists(normalized)) {
+    mockFileSystemState.files.delete(normalized);
+    return;
+  }
+  
+  // Remove directory if it exists
+  if (directoryExists(normalized)) {
+    if (options?.recursive) {
+      // Remove directory and all contents recursively
+      const filesToRemove: string[] = [];
+      const dirsToRemove: string[] = [];
+      
+      // Find all files and subdirectories within this directory
+      for (const [filePath] of mockFileSystemState.files) {
+        if (filePath === normalized || filePath.startsWith(normalized + '/')) {
+          filesToRemove.push(filePath);
+        }
+      }
+      
+      for (const dirPath of mockFileSystemState.directories) {
+        if (dirPath === normalized || dirPath.startsWith(normalized + '/')) {
+          dirsToRemove.push(dirPath);
+        }
+      }
+      
+      // Remove all files and directories
+      filesToRemove.forEach(filePath => mockFileSystemState.files.delete(filePath));
+      dirsToRemove.forEach(dirPath => mockFileSystemState.directories.delete(dirPath));
+    } else {
+      // Check if directory is empty (non-recursive removal)
+      const hasContents = Array.from(mockFileSystemState.files.keys()).some(filePath => 
+        filePath.startsWith(normalized + '/')
+      ) || Array.from(mockFileSystemState.directories).some(dirPath => 
+        dirPath.startsWith(normalized + '/') && dirPath !== normalized
+      );
+      
+      if (hasContents) {
+        throw new Error(`ENOTEMPTY: directory not empty, rmdir '${path}'`);
+      }
+      
+      mockFileSystemState.directories.delete(normalized);
+    }
+  }
+});
+
 // Create the mock file system object
 export const createFileSystemMock = (): MockedFileSystem => ({
   existsSync: mockExistsSync,
   readdirSync: mockReaddirSync,
   readFileSync: mockReadFileSync,
   writeFileSync: mockWriteFileSync,
-  mkdirSync: mockMkdirSync
+  mkdirSync: mockMkdirSync,
+  rmSync: mockRmSync
 });
 
 // Default export for easier importing

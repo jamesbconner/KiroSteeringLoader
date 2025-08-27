@@ -9,7 +9,8 @@ export default defineConfig({
     // Test file patterns
     include: [
       'tests/unit/**/*.test.ts',
-      'tests/integration/**/*.test.ts'
+      'tests/integration/**/*.test.ts',
+      'tests/performance/**/*.test.ts'
     ],
     exclude: [
       'node_modules/**',
@@ -22,9 +23,9 @@ export default defineConfig({
     setupFiles: ['./tests/setup/test-setup.ts'],
     
     // Test execution configuration
-    testTimeout: 10000,
-    hookTimeout: 10000,
-    teardownTimeout: 5000,
+    testTimeout: 60000, // Increased for performance tests
+    hookTimeout: 30000, // Increased for performance test setup
+    teardownTimeout: 15000, // Increased for performance test cleanup
     
     // Reporter configuration
     reporter: ['verbose', 'json', 'html'],

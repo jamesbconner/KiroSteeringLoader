@@ -3,11 +3,16 @@ import { resolve } from 'path';
 
 export default defineConfig({
   test: {
-    // Performance test environment
+    // Test environment configuration
     environment: 'node',
     
-    // Performance test file patterns
-    include: ['tests/performance/**/*.test.ts'],
+    // Mock configuration for performance tests
+    globals: true,
+    
+    // Performance test file patterns only
+    include: [
+      'tests/performance/**/*.test.ts'
+    ],
     exclude: [
       'node_modules/**',
       'out/**',
@@ -17,41 +22,37 @@ export default defineConfig({
       'tests/e2e/**'
     ],
     
-    // Performance test setup
+    // Global test setup
     setupFiles: ['./tests/setup/performance-setup.ts'],
     
-    // Longer timeouts for performance tests
-    testTimeout: 60000, // 1 minute for performance tests
-    hookTimeout: 30000,
-    teardownTimeout: 15000,
+    // Extended timeouts for performance tests
+    testTimeout: 300000, // 5 minutes for large dataset tests
+    hookTimeout: 60000,  // 1 minute for setup/teardown
+    teardownTimeout: 30000, // 30 seconds for cleanup
     
-    // Sequential execution for performance tests to avoid interference
-    pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true
-      }
-    },
+    // Performance test specific configuration
+    maxConcurrency: 1, // Run performance tests sequentially to avoid interference
+    isolate: true,     // Isolate each test for accurate measurements
     
-    // Reporter configuration for performance tests
+    // Reporter configuration
     reporter: ['verbose', 'json'],
     outputFile: {
       json: './coverage/performance-results.json'
     },
     
-    // No coverage for performance tests (they test performance, not code coverage)
+    // Disable coverage for performance tests (focus on performance, not coverage)
     coverage: {
       enabled: false
     },
     
-    // Performance test specific configuration
-    logHeapUsage: true,
-    
-    // Retry configuration for performance tests (to handle timing variations)
-    retry: 1
+    // TypeScript configuration
+    typecheck: {
+      enabled: true,
+      tsconfig: './tsconfig.json'
+    }
   },
   
-  // Resolve configuration
+  // Resolve configuration for TypeScript paths
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
@@ -62,6 +63,6 @@ export default defineConfig({
   // Define global variables for performance tests
   define: {
     'process.env.NODE_ENV': '"test"',
-    'process.env.TEST_TYPE': '"performance"'
+    'process.env.PERFORMANCE_TEST': '"true"'
   }
 });
