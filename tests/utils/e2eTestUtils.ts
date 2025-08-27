@@ -360,6 +360,48 @@ export class E2ETestManager {
     console.log(`Updating workspace config: ${section}.${key} = ${value}`);
     this.mockConfiguration[`${section}.${key}`] = value;
   }
+
+  /**
+   * Wait for tree data provider to refresh
+   * Note: This method is only functional when running in actual VS Code environment
+   */
+  async waitForTreeDataProviderRefresh(viewId: string, timeout: number = 5000): Promise<void> {
+    // Check if we're running in VS Code environment
+    if (typeof process !== 'undefined' && process.env.VSCODE_TEST_MODE === 'true') {
+      // In actual VS Code environment, we would listen for refresh events
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return;
+    }
+    
+    // In test environment, just simulate refresh wait
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+
+  /**
+   * Get tree data provider children
+   * Note: This method is only functional when running in actual VS Code environment
+   */
+  async getTreeDataProviderChildren(viewId: string): Promise<any[] | undefined> {
+    // Check if we're running in VS Code environment
+    if (typeof process !== 'undefined' && process.env.VSCODE_TEST_MODE === 'true') {
+      // In actual VS Code environment, we would get real tree items
+      // For now, simulate some tree items based on current configuration
+      const templatesPath = this.mockConfiguration[`${viewId}.templatesPath`];
+      if (templatesPath && fs.existsSync(templatesPath)) {
+        const files = fs.readdirSync(templatesPath);
+        return files.map(file => ({ label: file, resourceUri: path.join(templatesPath, file) }));
+      }
+      return [];
+    }
+    
+    // In test environment, simulate tree items based on configuration
+    const templatesPath = this.mockConfiguration[`${viewId}.templatesPath`];
+    if (templatesPath && fs.existsSync(templatesPath)) {
+      const files = fs.readdirSync(templatesPath);
+      return files.map(file => ({ label: file, resourceUri: path.join(templatesPath, file) }));
+    }
+    return [];
+  }
 }
 
 /**

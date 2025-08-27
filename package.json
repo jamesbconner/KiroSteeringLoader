@@ -92,7 +92,11 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "vitest run --config vitest.e2e.config.ts"
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "test:performance": "vitest run --config vitest.performance.config.ts",
+    "test:performance:watch": "vitest --config vitest.performance.config.ts",
+    "test:memory": "node --expose-gc node_modules/vitest/vitest.mjs run --config vitest.performance.config.ts tests/performance/memoryUsage.test.ts",
+    "test:memory:watch": "node --expose-gc node_modules/vitest/vitest.mjs --config vitest.performance.config.ts tests/performance/memoryUsage.test.ts"
   },
   "devDependencies": {
     "@types/node": "20.x",
