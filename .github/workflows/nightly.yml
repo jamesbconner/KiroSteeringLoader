@@ -1,0 +1,191 @@
+name: Nightly Tests
+
+on:
+  schedule:
+    # Run every night at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  comprehensive-performance:
+    name: Comprehensive Performance Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run comprehensive performance tests
+      run: npm run test:performance
+
+    - name: Run large dataset performance tests
+      run: |
+        # Run performance tests with larger datasets
+        npm run test:performance -- tests/performance/largeDatasetPerformance.test.ts
+
+    - name: Run memory leak detection
+      run: npm run test:memory
+
+    - name: Generate performance report
+      run: |
+        echo "# Nightly Performance Report - $(date)" > performance-report.md
+        echo "" >> performance-report.md
+        
+        if [ -f "coverage/performance-results.json" ]; then
+          echo "## Performance Results" >> performance-report.md
+          node -e "
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('coverage/performance-results.json', 'utf8'));
+            console.log(\`- Activation Time: \${results.activationTime}ms\`);
+            console.log(\`- Memory Usage: \${results.memoryUsage}MB\`);
+            console.log(\`- Template Loading Time: \${results.templateLoadingTime}ms\`);
+          " >> performance-report.md
+        fi
+        
+        if [ -f "coverage/large-dataset-performance-report.json" ]; then
+          echo "" >> performance-report.md
+          echo "## Large Dataset Performance" >> performance-report.md
+          node -e "
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('coverage/large-dataset-performance-report.json', 'utf8'));
+            if (results.summary) {
+              console.log(\`- Total Measurements: \${results.summary.totalMeasurements}\`);
+              console.log(\`- Average Duration: \${results.summary.averageDuration.toFixed(2)}ms\`);
+              console.log(\`- Max Duration: \${results.summary.maxDuration}ms\`);
+              console.log(\`- Min Duration: \${results.summary.minDuration}ms\`);
+            }
+          " >> performance-report.md
+        fi
+
+    - name: Upload performance artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nightly-performance-results
+        path: |
+          coverage/performance-results.json
+          coverage/memory-usage-report.json
+          coverage/large-dataset-performance-report.json
+          performance-report.md
+
+  cross-platform-compatibility:
+    name: Cross-Platform Compatibility
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18.x, 20.x, 21.x]
+      fail-fast: false
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run full test suite
+      run: |
+        npm run test:coverage
+        npm run test:e2e
+        npm run test:performance
+
+    - name: Platform-specific tests
+      run: |
+        # Run platform-specific file system tests
+        npm run test -- tests/unit/fileSystemMocks.test.ts
+
+    - name: Upload platform results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: platform-results-${{ matrix.os }}-node${{ matrix.node-version }}
+        path: |
+          coverage/test-results.json
+          coverage/performance-results.json
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run npm audit
+      run: npm audit --audit-level=moderate
+
+    - name: Check for known vulnerabilities
+      run: |
+        # Check for high/critical vulnerabilities
+        AUDIT_RESULT=$(npm audit --json --audit-level=high)
+        HIGH_VULNS=$(echo "$AUDIT_RESULT" | jq '.metadata.vulnerabilities.high // 0')
+        CRITICAL_VULNS=$(echo "$AUDIT_RESULT" | jq '.metadata.vulnerabilities.critical // 0')
+        
+        if [ "$HIGH_VULNS" -gt 0 ] || [ "$CRITICAL_VULNS" -gt 0 ]; then
+          echo "High or critical vulnerabilities found!"
+          echo "High: $HIGH_VULNS, Critical: $CRITICAL_VULNS"
+          exit 1
+        fi
+        
+        echo "No high or critical vulnerabilities found."
+
+  dependency-update-check:
+    name: Dependency Update Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Check for outdated dependencies
+      run: |
+        npm outdated --json > outdated.json || true
+        
+        if [ -s outdated.json ]; then
+          echo "Outdated dependencies found:"
+          cat outdated.json | jq '.'
+          
+          # Create issue or notification for outdated dependencies
+          echo "Consider updating the following dependencies:"
+          cat outdated.json | jq -r 'keys[]'
+        else
+          echo "All dependencies are up to date."
+        fi
+
+    - name: Upload dependency report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dependency-report
+        path: outdated.json

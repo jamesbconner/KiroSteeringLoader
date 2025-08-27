@@ -1,10 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SteeringTemplateProvider = void 0;
-const vscode = require("vscode");
-const fs = require("fs");
-const path = require("path");
-class SteeringTemplateProvider {
+import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+export class SteeringTemplateProvider {
     constructor(context) {
         this.context = context;
         this._onDidChangeTreeData = new vscode.EventEmitter();
@@ -84,7 +81,6 @@ class SteeringTemplateProvider {
         }
     }
 }
-exports.SteeringTemplateProvider = SteeringTemplateProvider;
 class TemplateItem extends vscode.TreeItem {
     constructor(label, templatePath, collapsibleState, itemType) {
         super(label, collapsibleState);

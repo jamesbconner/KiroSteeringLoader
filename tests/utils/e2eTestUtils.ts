@@ -103,6 +103,9 @@ export class E2ETestManager {
 
     // Write settings
     fs.writeFileSync(settingsPath, JSON.stringify(mergedSettings, null, 2));
+
+    // Also store in mock configuration for immediate access
+    Object.assign(this.mockConfiguration, settings);
   }
 
   /**
@@ -323,9 +326,13 @@ export class E2ETestManager {
     if (typeof process !== 'undefined' && process.env.VSCODE_TEST_MODE === 'true') {
       // In actual VS Code environment, we would use the real API
       return {
-        get: (key: string) => this.mockConfiguration[`${section}.${key}`],
+        get: (key: string) => {
+          const fullKey = section ? `${section}.${key}` : key;
+          return this.mockConfiguration[fullKey];
+        },
         update: async (key: string, value: any) => {
-          this.mockConfiguration[`${section}.${key}`] = value;
+          const fullKey = section ? `${section}.${key}` : key;
+          this.mockConfiguration[fullKey] = value;
         }
       };
     }
@@ -348,17 +355,19 @@ export class E2ETestManager {
    * Note: This method is only functional when running in actual VS Code environment
    */
   async updateWorkspaceConfiguration(section: string, key: string, value: any): Promise<void> {
+    const fullKey = `${section}.${key}`;
+    
     // Check if we're running in VS Code environment
     if (typeof process !== 'undefined' && process.env.VSCODE_TEST_MODE === 'true') {
       // In actual VS Code environment, we would use the real API
-      console.log(`Updating workspace config: ${section}.${key} = ${value}`);
-      this.mockConfiguration[`${section}.${key}`] = value;
+      console.log(`Updating workspace config: ${fullKey} = ${value}`);
+      this.mockConfiguration[fullKey] = value;
       return;
     }
     
     // In test environment, update the mock configuration
-    console.log(`Updating workspace config: ${section}.${key} = ${value}`);
-    this.mockConfiguration[`${section}.${key}`] = value;
+    console.log(`Updating workspace config: ${fullKey} = ${value}`);
+    this.mockConfiguration[fullKey] = value;
   }
 
   /**

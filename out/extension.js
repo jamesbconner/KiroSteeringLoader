@@ -1,10 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.deactivate = exports.activate = void 0;
-const vscode = require("vscode");
-const steeringTemplateProvider_1 = require("./steeringTemplateProvider");
-function activate(context) {
-    const provider = new steeringTemplateProvider_1.SteeringTemplateProvider(context);
+import * as vscode from 'vscode';
+import { SteeringTemplateProvider } from './steeringTemplateProvider';
+export function activate(context) {
+    const provider = new SteeringTemplateProvider(context);
     vscode.window.registerTreeDataProvider('kiroSteeringLoader', provider);
     const refreshCommand = vscode.commands.registerCommand('kiroSteeringLoader.refresh', () => {
         provider.refresh();
@@ -27,7 +24,5 @@ function activate(context) {
     });
     context.subscriptions.push(refreshCommand, loadTemplateCommand, setTemplatesPathCommand);
 }
-exports.activate = activate;
-function deactivate() { }
-exports.deactivate = deactivate;
+export function deactivate() { }
 //# sourceMappingURL=extension.js.map
