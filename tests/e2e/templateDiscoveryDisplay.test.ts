@@ -27,8 +27,26 @@ describe('Template Discovery and Display E2E Tests', () => {
 
   describe('Template Discovery from Configured Directory', () => {
     it('should discover all .md template files from configured templates directory', async () => {
-      // Use existing discovery templates fixture
-      const templatesDir = path.resolve(__dirname, '../fixtures/discovery-templates');
+      // Create our own discovery templates fixture for this test
+      const templatesDir = path.resolve(__dirname, '../fixtures/temp-discovery-templates-test1');
+      
+      // Ensure directory exists and create test files
+      if (!fs.existsSync(templatesDir)) {
+        fs.mkdirSync(templatesDir, { recursive: true });
+      }
+
+      // Create expected template files
+      const testFiles = [
+        { name: 'api-guidelines.md', content: '# API Guidelines\n\nThis is an API guidelines template.' },
+        { name: 'security-checklist.md', content: '# Security Checklist\n\nThis is a security checklist template.' },
+        { name: 'deployment-guide.md', content: '# Deployment Guide\n\nThis is a deployment guide template.' },
+        { name: 'readme.txt', content: 'This is a text file and should be ignored.' },
+        { name: 'config.json', content: '{"setting": "value"}' }
+      ];
+
+      for (const file of testFiles) {
+        fs.writeFileSync(path.join(templatesDir, file.name), file.content);
+      }
       
       // Verify fixture directory exists and contains expected files
       expect(fs.existsSync(templatesDir)).toBe(true);
@@ -78,6 +96,11 @@ describe('Template Discovery and Display E2E Tests', () => {
       console.log('✅ Template discovery completed successfully');
       console.log(`📁 Discovered ${discoveredMdFiles.length} template files`);
       console.log(`📄 Templates: ${discoveredMdFiles.join(', ')}`);
+
+      // Clean up temporary directory
+      if (fs.existsSync(templatesDir)) {
+        fs.rmSync(templatesDir, { recursive: true, force: true });
+      }
     });
 
     it('should handle templates directory with mixed file types', async () => {
@@ -294,8 +317,24 @@ describe('Template Discovery and Display E2E Tests', () => {
 
   describe('Tree View Population with Discovered Templates', () => {
     it('should populate tree view with discovered template items', async () => {
-      // Use existing discovery templates fixture
-      const templatesDir = path.resolve(__dirname, '../fixtures/discovery-templates');
+      // Create our own discovery templates fixture for this test
+      const templatesDir = path.resolve(__dirname, '../fixtures/temp-discovery-templates-test2');
+      
+      // Ensure directory exists and create test files
+      if (!fs.existsSync(templatesDir)) {
+        fs.mkdirSync(templatesDir, { recursive: true });
+      }
+
+      // Create template files for tree population test
+      const testFiles = [
+        { name: 'api-guidelines.md', content: '# API Guidelines\n\nThis is an API guidelines template for tree view.' },
+        { name: 'security-checklist.md', content: '# Security Checklist\n\nThis is a security checklist template for tree view.' },
+        { name: 'deployment-guide.md', content: '# Deployment Guide\n\nThis is a deployment guide template for tree view.' }
+      ];
+
+      for (const file of testFiles) {
+        fs.writeFileSync(path.join(templatesDir, file.name), file.content);
+      }
 
       // Create test workspace
       testContext = await testManager.createTestWorkspace({
@@ -333,6 +372,11 @@ describe('Template Discovery and Display E2E Tests', () => {
       // In a real VS Code environment, we would verify the tree view structure
       // For this test, we verify that the data source is correct
       console.log('✅ Tree view populated with discovered templates');
+
+      // Clean up temporary directory
+      if (fs.existsSync(templatesDir)) {
+        fs.rmSync(templatesDir, { recursive: true, force: true });
+      }
     });
 
     it('should handle tree view population with large number of templates', async () => {
@@ -729,8 +773,24 @@ describe('Template Discovery and Display E2E Tests', () => {
     });
 
     it('should display template items with appropriate command configuration', async () => {
-      // Use existing discovery templates
-      const templatesDir = path.resolve(__dirname, '../fixtures/discovery-templates');
+      // Create our own discovery templates fixture for this test
+      const templatesDir = path.resolve(__dirname, '../fixtures/temp-discovery-templates-test3');
+      
+      // Ensure directory exists and create test files
+      if (!fs.existsSync(templatesDir)) {
+        fs.mkdirSync(templatesDir, { recursive: true });
+      }
+
+      // Create template files for command configuration test
+      const testFiles = [
+        { name: 'api-guidelines.md', content: '# API Guidelines\n\nThis is an API guidelines template for command testing.' },
+        { name: 'security-checklist.md', content: '# Security Checklist\n\nThis is a security checklist template for command testing.' },
+        { name: 'deployment-guide.md', content: '# Deployment Guide\n\nThis is a deployment guide template for command testing.' }
+      ];
+
+      for (const file of testFiles) {
+        fs.writeFileSync(path.join(templatesDir, file.name), file.content);
+      }
 
       // Create test workspace
       testContext = await testManager.createTestWorkspace({
@@ -773,6 +833,11 @@ describe('Template Discovery and Display E2E Tests', () => {
       }
 
       console.log('✅ Template items configured with appropriate commands');
+
+      // Clean up temporary directory
+      if (fs.existsSync(templatesDir)) {
+        fs.rmSync(templatesDir, { recursive: true, force: true });
+      }
     });
 
     it('should handle template discovery refresh after configuration changes', async () => {
@@ -794,8 +859,26 @@ describe('Template Discovery and Display E2E Tests', () => {
 
       console.log('✅ Initial state: No templates path configured');
 
+      // Create templates directory for configuration change test
+      const templatesDir = path.resolve(__dirname, '../fixtures/temp-discovery-templates-test4');
+      
+      // Ensure directory exists and create test files
+      if (!fs.existsSync(templatesDir)) {
+        fs.mkdirSync(templatesDir, { recursive: true });
+      }
+
+      // Create template files for configuration change test
+      const testFiles = [
+        { name: 'api-guidelines.md', content: '# API Guidelines\n\nThis is an API guidelines template for config change testing.' },
+        { name: 'security-checklist.md', content: '# Security Checklist\n\nThis is a security checklist template for config change testing.' },
+        { name: 'deployment-guide.md', content: '# Deployment Guide\n\nThis is a deployment guide template for config change testing.' }
+      ];
+
+      for (const file of testFiles) {
+        fs.writeFileSync(path.join(templatesDir, file.name), file.content);
+      }
+
       // Update configuration to point to templates directory
-      const templatesDir = path.resolve(__dirname, '../fixtures/discovery-templates');
       await testManager.updateWorkspaceConfiguration(
         'kiroSteeringLoader',
         'templatesPath',
@@ -850,7 +933,10 @@ describe('Template Discovery and Display E2E Tests', () => {
       console.log('✅ After second configuration change: Alternate templates discovered');
       console.log(`📄 Alternate templates: ${alternateMdFiles.join(', ')}`);
 
-      // Clean up
+      // Clean up both directories
+      if (fs.existsSync(templatesDir)) {
+        fs.rmSync(templatesDir, { recursive: true, force: true });
+      }
       if (fs.existsSync(alternateDir)) {
         fs.rmSync(alternateDir, { recursive: true, force: true });
       }

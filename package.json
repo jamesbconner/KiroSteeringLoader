@@ -3,6 +3,7 @@
   "displayName": "Kiro Steering Loader",
   "description": "Load steering agent templates into Kiro projects",
   "version": "0.0.2",
+  "type": "module",
   "publisher": "jamesbconner",
   "license": "MIT",
   "repository": {
@@ -86,7 +87,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./tsconfig.build.json",
     "watch": "tsc -watch -p ./",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -96,7 +97,9 @@
     "test:performance": "vitest run --config vitest.performance.config.ts",
     "test:performance:watch": "vitest --config vitest.performance.config.ts",
     "test:memory": "node --expose-gc node_modules/vitest/vitest.mjs run --config vitest.performance.config.ts tests/performance/memoryUsage.test.ts",
-    "test:memory:watch": "node --expose-gc node_modules/vitest/vitest.mjs --config vitest.performance.config.ts tests/performance/memoryUsage.test.ts"
+    "test:memory:watch": "node --expose-gc node_modules/vitest/vitest.mjs --config vitest.performance.config.ts tests/performance/memoryUsage.test.ts",
+    "ci:check": "node scripts/ci-check.js",
+    "ci:check:help": "node scripts/ci-check.js --help"
   },
   "devDependencies": {
     "@types/node": "20.x",
