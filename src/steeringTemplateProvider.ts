@@ -67,7 +67,7 @@ export class SteeringTemplateProvider implements vscode.TreeDataProvider<Templat
     }
 
     async loadTemplate(templatePath: string): Promise<void> {
-        if (!templatePath) {
+        if (!templatePath || !templatePath.trim()) {
             vscode.window.showErrorMessage('No template path provided');
             return;
         }
@@ -78,9 +78,9 @@ export class SteeringTemplateProvider implements vscode.TreeDataProvider<Templat
             return;
         }
 
-        const steeringDir = path.join(workspaceFolder.uri.fsPath, '.kiro', 'steering');
-        
         try {
+            const steeringDir = path.join(workspaceFolder.uri.fsPath, '.kiro', 'steering');
+            
             // Ensure .kiro/steering directory exists
             if (!fs.existsSync(steeringDir)) {
                 fs.mkdirSync(steeringDir, { recursive: true });

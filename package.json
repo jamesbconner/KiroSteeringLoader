@@ -2,9 +2,11 @@
   "name": "kiro-steering-loader",
   "displayName": "Kiro Steering Loader",
   "description": "Load steering agent templates into Kiro projects",
-  "version": "0.0.2",
+  "version": "0.0.3",
+
   "publisher": "jamesbconner",
   "license": "MIT",
+  "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/jamesbconner/KiroSteeringLoader.git"
@@ -15,6 +17,7 @@
   "categories": [
     "Other"
   ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "views": {
@@ -86,12 +89,56 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "compile": "tsc -p ./tsconfig.build.json",
+    "compile:tests": "tsc -p ./tsconfig.tests.json",
+    "watch": "tsc -watch -p ./",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:unit:watch": "vitest --config vitest.unit.config.ts",
+    "test:unit:runner": "npx tsx tests/unit/runUnitTests.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:integration:watch": "vitest --config vitest.integration.config.ts",
+    "test:integration:runner": "npx tsx tests/integration/runIntegrationTests.ts",
+    "test:performance": "vitest run --config vitest.performance.config.ts",
+    "test:performance:watch": "vitest --config vitest.performance.config.ts",
+    "test:performance:runner": "node --expose-gc --import tsx/esm tests/performance/runPerformanceTests.ts",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "test:e2e:runner": "npx tsx tests/e2e/runE2ETests.ts",
+    "test:memory": "node --expose-gc node_modules/vitest/vitest.mjs run --config vitest.performance.config.ts tests/performance/memoryUsage.test.ts",
+    "test:memory:watch": "node --expose-gc node_modules/vitest/vitest.mjs --config vitest.performance.config.ts tests/performance/memoryUsage.test.ts",
+    "test:report": "npx tsx scripts/test-failure-reporter.js",
+    "test:notify": "npx tsx scripts/notify-test-failures.js",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:performance && npm run test:memory",
+    "test:all:report": "npm run test:all; npm run test:report",
+    "coverage:check": "npx tsx scripts/coverage-reporter.ts check",
+    "coverage:report": "npx tsx scripts/coverage-reporter.ts report",
+    "coverage:trends": "npx tsx scripts/coverage-trend-analyzer.ts analyze",
+    "coverage:dashboard": "npx tsx scripts/coverage-dashboard.ts",
+    "coverage:post-test": "npx tsx scripts/post-test-coverage.ts",
+    "coverage:quality-gate": "npm run test:coverage && npm run coverage:post-test && npm run coverage:check",
+    "coverage:badge": "node -e \"const config = require('./coverage.config.js'); console.log('Coverage configuration loaded successfully');\"",
+    "coverage:validate": "npx tsx scripts/validate-coverage-setup.ts",
+    "ci:check": "npx tsx scripts/ci-check.js",
+    "ci:check:help": "npx tsx scripts/ci-check.js --help",
+    "test:health-check": "npx tsx tests/maintenance/run-health-check.ts",
+    "test:cleanup": "npx tsx tests/maintenance/test-cleanup.ts",
+    "test:performance-report": "npx tsx tests/maintenance/performance-monitor.ts",
+    "test:dependency-check": "npx tsx tests/maintenance/dependency-monitor.ts",
+    "test:flaky-check": "npx tsx tests/maintenance/flaky-test-detector.ts",
+    "test:maintenance": "npm run test:cleanup && npm run test:health-check && npm run test:performance-report",
+    "test:maintenance:full": "npm run test:maintenance && npm run test:dependency-check && npm run test:flaky-check"
   },
   "devDependencies": {
-    "@types/node": "16.x",
+    "@types/node": "20.x",
     "@types/vscode": "^1.74.0",
-    "typescript": "^4.9.4"
+    "@vitest/coverage-v8": "^1.6.0",
+    "@vitest/ui": "^1.6.0",
+    "@vscode/test-electron": "^2.3.8",
+    "tsx": "^4.20.5",
+    "typescript": "^5.3.0",
+    "vitest": "^1.6.0"
   }
 }

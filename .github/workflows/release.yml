@@ -1,0 +1,198 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  test-before-release:
+    name: Pre-Release Testing
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run full test suite
+      run: |
+        npm run test:coverage
+        npm run test:e2e
+        npm run test:performance
+
+    - name: Verify coverage threshold
+      run: |
+        COVERAGE=$(node -e "
+          const fs = require('fs');
+          const coverage = JSON.parse(fs.readFileSync('coverage/coverage-final.json', 'utf8'));
+          const totals = Object.values(coverage).reduce((acc, file) => {
+            Object.keys(file).forEach(key => {
+              if (key !== 'path') {
+                acc[key] = (acc[key] || { total: 0, covered: 0 });
+                acc[key].total += file[key].total || 0;
+                acc[key].covered += file[key].covered || 0;
+              }
+            });
+            return acc;
+          }, {});
+          const linesCoverage = (totals.lines.covered / totals.lines.total) * 100;
+          console.log(linesCoverage.toFixed(2));
+        ")
+        
+        if (( $(echo "$COVERAGE < 85" | bc -l) )); then
+          echo "Cannot release: Coverage $COVERAGE% is below required 85%"
+          exit 1
+        fi
+
+  build-and-package:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    needs: test-before-release
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install vsce
+      run: npm install -g @vscode/vsce
+
+    - name: Update version if manual trigger
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        npm version ${{ github.event.inputs.version }} --no-git-tag-version
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add package.json
+        git commit -m "Bump version to ${{ github.event.inputs.version }}"
+        git tag "v${{ github.event.inputs.version }}"
+
+    - name: Build extension
+      run: npm run compile
+
+    - name: Package extension
+      run: vsce package
+
+    - name: Upload package artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: extension-package
+        path: '*.vsix'
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build-and-package
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download package artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: extension-package
+
+    - name: Get version
+      id: get_version
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        release_name: Release v${{ steps.get_version.outputs.version }}
+        body: |
+          ## Changes in v${{ steps.get_version.outputs.version }}
+          
+          ### Features
+          - Comprehensive testing infrastructure with 85%+ code coverage
+          - Performance monitoring and regression detection
+          - Cross-platform compatibility (Windows, macOS, Linux)
+          - Memory leak detection and monitoring
+          
+          ### Testing
+          - Unit tests for all core components
+          - Integration tests for VS Code extension functionality
+          - End-to-end tests using @vscode/test-electron
+          - Performance tests including large dataset scenarios
+          - Memory usage monitoring and leak detection
+          
+          ### CI/CD
+          - Automated testing on multiple platforms
+          - Coverage quality gates
+          - Performance regression detection
+          - Security auditing
+          
+          See the [CHANGELOG](CHANGELOG.md) for detailed changes.
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./kiro-steering-loader-${{ steps.get_version.outputs.version }}.vsix
+        asset_name: kiro-steering-loader-${{ steps.get_version.outputs.version }}.vsix
+        asset_content_type: application/zip
+
+  publish-marketplace:
+    name: Publish to VS Code Marketplace
+    runs-on: ubuntu-latest
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    environment: marketplace
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install vsce
+      run: npm install -g @vscode/vsce
+
+    - name: Publish to marketplace
+      run: vsce publish -p ${{ secrets.VSCE_PAT }}
+      env:
+        VSCE_PAT: ${{ secrets.VSCE_PAT }}

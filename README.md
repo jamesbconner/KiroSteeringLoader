@@ -37,3 +37,42 @@ A Visual Studio Code extension that helps you load steering agent templates into
 2. Run `npm install` to install dependencies
 3. Run `npm run compile` to build the extension
 4. npm install -g vsce
+
+### Testing
+
+This project includes comprehensive testing infrastructure:
+
+```bash
+# Run all tests
+npm run test
+
+# Run tests with coverage (85% threshold enforced)
+npm run test:coverage
+
+# Run integration tests
+npm run test:e2e
+
+# Run performance tests
+npm run test:performance
+
+# Run memory usage tests
+npm run test:memory
+```
+
+### CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment:
+
+- **CI Pipeline**: Runs on every push and PR with cross-platform testing (Ubuntu, Windows, macOS)
+- **PR Validation**: Automated code quality checks, coverage analysis, and performance regression detection
+- **Nightly Tests**: Comprehensive testing including large dataset performance and security audits
+- **Release Pipeline**: Automated packaging and publishing to VS Code Marketplace
+
+See [.github/README.md](.github/README.md) for detailed CI/CD documentation.
+
+### Quality Standards
+
+- **Code Coverage**: Minimum 85% line coverage required
+- **Performance**: Activation time <500ms, memory usage <50MB
+- **Cross-Platform**: Full compatibility with Windows, macOS, and Linux
+- **Security**: Regular vulnerability scanning and dependency auditing
