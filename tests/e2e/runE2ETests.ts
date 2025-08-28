@@ -6,6 +6,7 @@
 
 import * as path from 'path';
 import { runTests } from '@vscode/test-electron';
+import { fileURLToPath } from 'url';
 
 /**
  * Main function to run E2E tests with VS Code
@@ -41,7 +42,7 @@ async function main(): Promise<void> {
 }
 
 // Run if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
   main();
 }
 

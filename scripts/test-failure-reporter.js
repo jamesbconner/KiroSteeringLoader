@@ -9,6 +9,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 class TestFailureReporter {
   constructor() {
@@ -368,7 +369,7 @@ class TestFailureReporter {
 }
 
 // Run the reporter if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
   const reporter = new TestFailureReporter();
   reporter.run();
 }

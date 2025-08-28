@@ -146,7 +146,7 @@ Examples:
 }
 
 // Run if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('runUnitTests.ts')) {
+if (fileURLToPath(import.meta.url) === process.argv[1] || process.argv[1]?.endsWith('runUnitTests.ts')) {
   const config = parseArgs();
   main(config);
 }
