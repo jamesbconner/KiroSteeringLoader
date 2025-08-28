@@ -628,6 +628,9 @@ describe('Tree Data Provider Integration Tests', () => {
           [templatePath]: '# Test Template'
         }
       });
+      
+      // Re-activate to ensure commands are registered after mock reset
+      activate(mockContext);
 
       // Act
       const children = await provider.getChildren();

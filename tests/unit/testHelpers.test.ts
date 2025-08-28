@@ -3,7 +3,7 @@
  * Verifies that the test helpers work correctly and provide expected functionality
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import '../mocks/setup'; // Import mock setup first
 import {
   testHelpers,
@@ -230,7 +230,7 @@ describe('Test Helper Utilities', () => {
       
       expect(() => {
         typeAssertions.assertInstanceOf(value, Date);
-      }).toThrow('Expected value to be instance of Date, but got string');
+      }).toThrow('Expected value to be instance of Date, but got String');
     });
   });
 

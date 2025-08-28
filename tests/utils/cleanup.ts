@@ -345,24 +345,32 @@ export class VSCodeCleanup {
    * Clean up VS Code mocks
    */
   static cleanupVSCodeMocks(): void {
-    const vscode = require('vscode');
+    try {
+      // Try to get vscode from the mock setup instead of requiring it directly
+      const mockSetup = require('../mocks/setup');
+      const vscode = mockSetup.vscode;
     
-    // Reset workspace state
-    if (vscode.workspace) {
-      vscode.workspace.workspaceFolders = undefined;
-      
-      if (vscode.workspace.getConfiguration) {
-        vscode.workspace.getConfiguration.mockReturnValue({
-          get: vi.fn().mockReturnValue(undefined),
-          update: vi.fn().mockResolvedValue(undefined),
-          has: vi.fn().mockReturnValue(false),
-          inspect: vi.fn().mockReturnValue({})
-        });
+      // Reset workspace state
+      if (vscode && vscode.workspace) {
+        vscode.workspace.workspaceFolders = undefined;
+        
+        if (vscode.workspace.getConfiguration) {
+          vscode.workspace.getConfiguration.mockReturnValue({
+            get: vi.fn().mockReturnValue(undefined),
+            update: vi.fn().mockResolvedValue(undefined),
+            has: vi.fn().mockReturnValue(false),
+            inspect: vi.fn().mockReturnValue({})
+          });
+        }
       }
-    }
 
-    // Clear all mock call history
-    vi.clearAllMocks();
+      // Clear all mock call history
+      vi.clearAllMocks();
+    } catch (error) {
+      // vscode module not available in this context, skip cleanup
+      console.warn('VS Code module not available for cleanup, using vi.clearAllMocks()');
+      vi.clearAllMocks();
+    }
   }
 
   /**
@@ -390,25 +398,32 @@ export class VSCodeCleanup {
    * Reset VS Code window mocks
    */
   static resetWindowMocks(): void {
-    const vscode = require('vscode');
+    try {
+      // Try to get vscode from the mock setup instead of requiring it directly
+      const mockSetup = require('../mocks/setup');
+      const vscode = mockSetup.vscode;
     
-    if (vscode.window) {
-      // Reset message mocks
-      if (vscode.window.showInformationMessage) {
-        vscode.window.showInformationMessage.mockReset();
+      if (vscode && vscode.window) {
+        // Reset message mocks
+        if (vscode.window.showInformationMessage) {
+          vscode.window.showInformationMessage.mockReset();
+        }
+        if (vscode.window.showErrorMessage) {
+          vscode.window.showErrorMessage.mockReset();
+        }
+        if (vscode.window.showWarningMessage) {
+          vscode.window.showWarningMessage.mockReset();
+        }
+        if (vscode.window.showOpenDialog) {
+          vscode.window.showOpenDialog.mockReset();
+        }
+        if (vscode.window.registerTreeDataProvider) {
+          vscode.window.registerTreeDataProvider.mockReset();
+        }
       }
-      if (vscode.window.showErrorMessage) {
-        vscode.window.showErrorMessage.mockReset();
-      }
-      if (vscode.window.showWarningMessage) {
-        vscode.window.showWarningMessage.mockReset();
-      }
-      if (vscode.window.showOpenDialog) {
-        vscode.window.showOpenDialog.mockReset();
-      }
-      if (vscode.window.registerTreeDataProvider) {
-        vscode.window.registerTreeDataProvider.mockReset();
-      }
+    } catch (error) {
+      // vscode module not available in this context, skip cleanup
+      console.warn('VS Code module not available for window cleanup:', error);
     }
   }
 
@@ -416,10 +431,17 @@ export class VSCodeCleanup {
    * Reset VS Code commands mocks
    */
   static resetCommandsMocks(): void {
-    const vscode = require('vscode');
+    try {
+      // Try to get vscode from the mock setup instead of requiring it directly
+      const mockSetup = require('../mocks/setup');
+      const vscode = mockSetup.vscode;
     
-    if (vscode.commands && vscode.commands.registerCommand) {
-      vscode.commands.registerCommand.mockReset();
+      if (vscode && vscode.commands && vscode.commands.registerCommand) {
+        vscode.commands.registerCommand.mockReset();
+      }
+    } catch (error) {
+      // vscode module not available in this context, skip cleanup
+      console.warn('VS Code module not available for commands cleanup:', error);
     }
   }
 }

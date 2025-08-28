@@ -280,41 +280,71 @@ export class TestHelpers {
    * Simulate user selecting a folder in VS Code dialog
    */
   simulateUserSelectFolder(folderPath: string): void {
-    const { vscode } = require('../mocks/setup');
-    vscode.window.showOpenDialog.mockResolvedValueOnce([{
-      fsPath: folderPath,
-      scheme: 'file',
-      authority: '',
-      path: folderPath,
-      query: '',
-      fragment: ''
-    }]);
+    try {
+      const mockSetup = require('../mocks/setup');
+      const vscode = mockSetup.vscode;
+      if (vscode && vscode.window && vscode.window.showOpenDialog) {
+        vscode.window.showOpenDialog.mockResolvedValueOnce([{
+          fsPath: folderPath,
+          scheme: 'file',
+          authority: '',
+          path: folderPath,
+          query: '',
+          fragment: ''
+        }]);
+      }
+    } catch (error) {
+      console.warn('Could not simulate user folder selection:', error);
+    }
   }
 
   /**
    * Simulate user canceling VS Code dialog
    */
   simulateUserCancelDialog(): void {
-    const { vscode } = require('../mocks/setup');
-    vscode.window.showOpenDialog.mockResolvedValueOnce(undefined);
+    try {
+      const mockSetup = require('../mocks/setup');
+      const vscode = mockSetup.vscode;
+      if (vscode && vscode.window && vscode.window.showOpenDialog) {
+        vscode.window.showOpenDialog.mockResolvedValueOnce(undefined);
+      }
+    } catch (error) {
+      console.warn('Could not simulate user dialog cancellation:', error);
+    }
   }
 
   /**
    * Get all registered commands from VS Code mock
    */
   getRegisteredCommands(): Array<{ command: string; callback: Function }> {
-    const { vscode } = require('../mocks/setup');
-    const calls = vscode.commands.registerCommand.mock.calls;
-    return calls.map(([command, callback]: [string, Function]) => ({ command, callback }));
+    try {
+      const mockSetup = require('../mocks/setup');
+      const vscode = mockSetup.vscode;
+      if (vscode && vscode.commands && vscode.commands.registerCommand) {
+        const calls = vscode.commands.registerCommand.mock.calls;
+        return calls.map(([command, callback]: [string, Function]) => ({ command, callback }));
+      }
+    } catch (error) {
+      console.warn('Could not get registered commands:', error);
+    }
+    return [];
   }
 
   /**
    * Get all registered tree data providers from VS Code mock
    */
   getRegisteredTreeDataProviders(): Array<{ viewId: string; provider: any }> {
-    const { vscode } = require('../mocks/setup');
-    const calls = vscode.window.registerTreeDataProvider.mock.calls;
-    return calls.map(([viewId, provider]: [string, any]) => ({ viewId, provider }));
+    try {
+      const mockSetup = require('../mocks/setup');
+      const vscode = mockSetup.vscode;
+      if (vscode && vscode.window && vscode.window.registerTreeDataProvider) {
+        const calls = vscode.window.registerTreeDataProvider.mock.calls;
+        return calls.map(([viewId, provider]: [string, any]) => ({ viewId, provider }));
+      }
+    } catch (error) {
+      console.warn('Could not get registered tree data providers:', error);
+    }
+    return [];
   }
 
   /**

@@ -4,71 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import '../mocks/setup'; // Import mock setup first
 import { fileSystemMockUtils } from '../mocks/fs';
-
-// Mock the modules first (hoisted)
-vi.mock('vscode', () => ({
-  workspace: {
-    getConfiguration: vi.fn(),
-    workspaceFolders: undefined
-  },
-  window: {
-    showInformationMessage: vi.fn(),
-    showErrorMessage: vi.fn()
-  },
-  EventEmitter: class MockEventEmitter {
-    private listeners: Array<(e: any) => any> = [];
-    
-    public readonly event = (listener: (e: any) => any) => {
-      this.listeners.push(listener);
-      return {
-        dispose: () => {
-          const index = this.listeners.indexOf(listener);
-          if (index >= 0) {
-            this.listeners.splice(index, 1);
-          }
-        }
-      };
-    };
-
-    fire(data: any): void {
-      this.listeners.forEach(listener => listener(data));
-    }
-
-    dispose(): void {
-      this.listeners = [];
-    }
-  },
-  TreeItem: class MockTreeItem {
-    constructor(public label: string, public collapsibleState?: number) {}
-  },
-  ThemeIcon: class MockThemeIcon {
-    constructor(public id: string) {}
-  },
-  TreeItemCollapsibleState: {
-    None: 0,
-    Collapsed: 1,
-    Expanded: 2
-  }
-}));
-
-vi.mock('fs', () => ({
-  existsSync: vi.fn(),
-  readdirSync: vi.fn(),
-  readFileSync: vi.fn(),
-  writeFileSync: vi.fn(),
-  mkdirSync: vi.fn()
-}));
-
-vi.mock('path', () => ({
-  join: vi.fn((...args) => args.join('/')),
-  basename: vi.fn((path, ext) => {
-    const name = path.split('/').pop() || path;
-    return ext ? name.replace(ext, '') : name;
-  })
-}));
-
-// Import after mocking
 import { SteeringTemplateProvider } from '../../src/steeringTemplateProvider';
 
 // Helper function to create mock workspace folder
@@ -131,6 +68,8 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
       // Mock file system operations
       mockFs.existsSync.mockReturnValue(false); // Directory doesn't exist initially
       mockFs.readFileSync.mockReturnValue(templateContent);
+      mockFs.mkdirSync.mockReturnValue(undefined);
+      mockFs.writeFileSync.mockReturnValue(undefined);
 
       // Act
       await provider.loadTemplate(templatePath);
@@ -154,6 +93,8 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
       // Mock existsSync to return false for steering directory
       mockFs.existsSync.mockReturnValue(false);
       mockFs.readFileSync.mockReturnValue(templateContent);
+      mockFs.mkdirSync.mockReturnValue(undefined);
+      mockFs.writeFileSync.mockReturnValue(undefined);
 
       // Act
       await provider.loadTemplate(templatePath);
@@ -174,6 +115,7 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
       // Mock existsSync to return true for steering directory
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(templateContent);
+      mockFs.writeFileSync.mockReturnValue(undefined);
 
       // Act
       await provider.loadTemplate(templatePath);
@@ -193,6 +135,7 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
 
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(templateContent);
+      mockFs.writeFileSync.mockReturnValue(undefined);
 
       // Act
       await provider.loadTemplate(templatePath);
@@ -376,7 +319,11 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
       mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
       mockFs.existsSync.mockReturnValue(true);
-      mockFs.readFileSync.mockReturnValue(templateContent);
+      mockFs.readFileSync.mockImplementation((path: string) => {
+        if (path === templatePath) return templateContent;
+        return '';
+      });
+      mockFs.writeFileSync.mockReturnValue(undefined);
 
       // Act
       await provider.loadTemplate(templatePath);
@@ -431,6 +378,7 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
         if (path === templatePath2) return templateContent2;
         return '';
       });
+      mockFs.writeFileSync.mockReturnValue(undefined);
 
       // Act
       await provider.loadTemplate(templatePath1);

@@ -140,6 +140,9 @@ export class E2ETestManager {
       // Simulate the actual command behavior for testing even in VS Code test mode
       if (command === 'kiroSteeringLoader.loadTemplate' && args.length > 0) {
         await this.simulateTemplateLoading(args[0]);
+      } else if (command === 'kiroSteeringLoader.refresh') {
+        // Simulate refresh command with appropriate delay
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
       
       return {} as T;
@@ -151,6 +154,9 @@ export class E2ETestManager {
     // Simulate the actual command behavior for testing
     if (command === 'kiroSteeringLoader.loadTemplate' && args.length > 0) {
       await this.simulateTemplateLoading(args[0]);
+    } else if (command === 'kiroSteeringLoader.refresh') {
+      // Simulate refresh command with appropriate delay
+      await new Promise(resolve => setTimeout(resolve, 150));
     }
     
     return {} as T;
@@ -362,12 +368,17 @@ export class E2ETestManager {
       // In actual VS Code environment, we would use the real API
       console.log(`Updating workspace config: ${fullKey} = ${value}`);
       this.mockConfiguration[fullKey] = value;
+      // Wait longer for configuration to propagate in VS Code environment
+      await new Promise(resolve => setTimeout(resolve, 200));
       return;
     }
     
     // In test environment, update the mock configuration
     console.log(`Updating workspace config: ${fullKey} = ${value}`);
     this.mockConfiguration[fullKey] = value;
+    
+    // Also wait a bit to simulate configuration update propagation
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
 
   /**
@@ -395,20 +406,73 @@ export class E2ETestManager {
     if (typeof process !== 'undefined' && process.env.VSCODE_TEST_MODE === 'true') {
       // In actual VS Code environment, we would get real tree items
       // For now, simulate some tree items based on current configuration
-      const templatesPath = this.mockConfiguration[`${viewId}.templatesPath`];
+      const templatesPath = this.mockConfiguration['kiroSteeringLoader.templatesPath'];
       if (templatesPath && fs.existsSync(templatesPath)) {
-        const files = fs.readdirSync(templatesPath);
-        return files.map(file => ({ label: file, resourceUri: path.join(templatesPath, file) }));
+        try {
+          const files = fs.readdirSync(templatesPath);
+          const mdFiles = files.filter(file => file.endsWith('.md'));
+          console.log(`Found ${mdFiles.length} template files in ${templatesPath}`);
+          return mdFiles.map(file => ({ 
+            label: path.basename(file, '.md'), 
+            resourceUri: path.join(templatesPath, file),
+            itemType: 'template'
+          }));
+        } catch (error) {
+          console.warn(`Error reading templates directory ${templatesPath}:`, error);
+          return [];
+        }
       }
+      console.log(`No templates path configured or path doesn't exist: ${templatesPath}`);
       return [];
     }
     
     // In test environment, simulate tree items based on configuration
-    const templatesPath = this.mockConfiguration[`${viewId}.templatesPath`];
+    const templatesPath = this.mockConfiguration['kiroSteeringLoader.templatesPath'];
+    console.log(`Looking for templates in: ${templatesPath}`);
+    console.log(`Current mock configuration:`, this.mockConfiguration);
+    
     if (templatesPath && fs.existsSync(templatesPath)) {
-      const files = fs.readdirSync(templatesPath);
-      return files.map(file => ({ label: file, resourceUri: path.join(templatesPath, file) }));
+      try {
+        const files = fs.readdirSync(templatesPath);
+        const mdFiles = files.filter(file => file.endsWith('.md'));
+        console.log(`Found ${mdFiles.length} template files in ${templatesPath}: ${mdFiles.join(', ')}`);
+        return mdFiles.map(file => ({ 
+          label: path.basename(file, '.md'), 
+          resourceUri: path.join(templatesPath, file),
+          itemType: 'template'
+        }));
+      } catch (error) {
+        console.warn(`Error reading templates directory ${templatesPath}:`, error);
+        return [];
+      }
     }
+    
+    console.log(`No templates path configured or path doesn't exist: ${templatesPath}`);
+    
+    // If no templates path is configured, try to find templates in the current workspace
+    if (this.currentWorkspace) {
+      const workspaceInfo = e2eUtils.getWorkspaceInfo(this.currentWorkspace);
+      if (workspaceInfo) {
+        const defaultTemplatesPath = path.join(workspaceInfo.path, 'templates');
+        console.log(`Trying default templates path: ${defaultTemplatesPath}`);
+        
+        if (fs.existsSync(defaultTemplatesPath)) {
+          try {
+            const files = fs.readdirSync(defaultTemplatesPath);
+            const mdFiles = files.filter(file => file.endsWith('.md'));
+            console.log(`Found ${mdFiles.length} template files in default path: ${mdFiles.join(', ')}`);
+            return mdFiles.map(file => ({ 
+              label: path.basename(file, '.md'), 
+              resourceUri: path.join(defaultTemplatesPath, file),
+              itemType: 'template'
+            }));
+          } catch (error) {
+            console.warn(`Error reading default templates directory ${defaultTemplatesPath}:`, error);
+          }
+        }
+      }
+    }
+    
     return [];
   }
 }

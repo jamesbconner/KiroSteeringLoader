@@ -4,46 +4,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import '../mocks/setup'; // Import mock setup first
 import { MockEventEmitter, TreeItemCollapsibleState } from '../mocks/vscode';
 import { fileSystemMockUtils } from '../mocks/fs';
-
-// Mock the modules first (hoisted)
-vi.mock('vscode', () => ({
-  workspace: {
-    getConfiguration: vi.fn(),
-    workspaceFolders: undefined
-  },
-  window: {
-    showInformationMessage: vi.fn(),
-    showErrorMessage: vi.fn()
-  },
-  EventEmitter: MockEventEmitter,
-  TreeItem: class MockTreeItem {
-    constructor(public label: string, public collapsibleState?: number) {}
-  },
-  ThemeIcon: class MockThemeIcon {
-    constructor(public id: string) {}
-  },
-  TreeItemCollapsibleState
-}));
-
-vi.mock('fs', () => ({
-  existsSync: vi.fn(),
-  readdirSync: vi.fn(),
-  readFileSync: vi.fn(),
-  writeFileSync: vi.fn(),
-  mkdirSync: vi.fn()
-}));
-
-vi.mock('path', () => ({
-  join: vi.fn((...args) => args.join('/')),
-  basename: vi.fn((path, ext) => {
-    const name = path.split('/').pop() || path;
-    return ext ? name.replace(ext, '') : name;
-  })
-}));
-
-// Import after mocking
+import { testHelpers } from '../utils/testHelpers';
 import { SteeringTemplateProvider } from '../../src/steeringTemplateProvider';
 
 // Helper function to create mock workspace folder
@@ -718,6 +682,12 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations
+        mockFs.existsSync.mockReturnValue(false); // Directory doesn't exist initially
+        mockFs.readFileSync.mockReturnValue(templateContent);
+        mockFs.mkdirSync.mockReturnValue(undefined);
+        mockFs.writeFileSync.mockReturnValue(undefined);
+
         // Act
         await provider.loadTemplate(templatePath);
 
@@ -801,6 +771,14 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations with specific content
+        mockFs.existsSync.mockReturnValue(true);
+        mockFs.readFileSync.mockImplementation((path: string) => {
+          if (path === templatePath) return templateContent;
+          return '';
+        });
+        mockFs.writeFileSync.mockReturnValue(undefined);
+
         // Act
         await provider.loadTemplate(templatePath);
 
@@ -830,6 +808,14 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations with specific content
+        mockFs.existsSync.mockReturnValue(true);
+        mockFs.readFileSync.mockImplementation((path: string) => {
+          if (path === templatePath) return templateContent;
+          return '';
+        });
+        mockFs.writeFileSync.mockReturnValue(undefined);
+
         // Act
         await provider.loadTemplate(templatePath);
 
@@ -837,6 +823,9 @@ describe('SteeringTemplateProvider', () => {
         expect(mockFs.writeFileSync).toHaveBeenCalledWith(
           '/test/workspace/.kiro/steering/unicode-template.md',
           templateContent
+        );
+        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledWith(
+          'Template "unicode-template.md" loaded successfully'
         );
       });
 
@@ -855,6 +844,14 @@ describe('SteeringTemplateProvider', () => {
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+
+        // Mock file system operations with specific content
+        mockFs.existsSync.mockReturnValue(true);
+        mockFs.readFileSync.mockImplementation((path: string) => {
+          if (path === templatePath) return templateContent;
+          return '';
+        });
+        mockFs.writeFileSync.mockReturnValue(undefined);
 
         // Act
         await provider.loadTemplate(templatePath);
@@ -886,6 +883,14 @@ describe('SteeringTemplateProvider', () => {
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+
+        // Mock file system operations with specific content
+        mockFs.existsSync.mockReturnValue(true);
+        mockFs.readFileSync.mockImplementation((path: string) => {
+          if (path === templatePath) return newTemplateContent;
+          return '';
+        });
+        mockFs.writeFileSync.mockReturnValue(undefined);
 
         // Act
         await provider.loadTemplate(templatePath);
@@ -1082,6 +1087,9 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations - directory exists, read succeeds, write fails
+        mockFs.existsSync.mockReturnValue(true);
+        mockFs.readFileSync.mockReturnValue(templateContent);
         mockFs.writeFileSync.mockImplementation(() => {
           throw new Error('EACCES: permission denied, open \'/test/workspace/.kiro/steering/template.md\'');
         });
@@ -1111,6 +1119,9 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations - directory exists, read succeeds, write fails
+        mockFs.existsSync.mockReturnValue(true);
+        mockFs.readFileSync.mockReturnValue(templateContent);
         mockFs.writeFileSync.mockImplementation(() => {
           throw new Error('ENOSPC: no space left on device, write');
         });
@@ -1140,6 +1151,8 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations - directory exists, read fails
+        mockFs.existsSync.mockReturnValue(true);
         mockFs.readFileSync.mockImplementation(() => {
           throw new Error('Unknown file system error');
         });
@@ -1163,6 +1176,8 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations - directory exists, read fails with invalid name
+        mockFs.existsSync.mockReturnValue(true);
         mockFs.readFileSync.mockImplementation(() => {
           throw new Error('EINVAL: invalid name, open \'/test/templates/invalid<>|:*?"template.md\'');
         });
@@ -1184,6 +1199,8 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations - directory exists, read fails with name too long
+        mockFs.existsSync.mockReturnValue(true);
         mockFs.readFileSync.mockImplementation(() => {
           throw new Error('ENAMETOOLONG: name too long');
         });
@@ -1209,6 +1226,8 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations - directory exists, read fails because it's a directory
+        mockFs.existsSync.mockReturnValue(true);
         mockFs.readFileSync.mockImplementation(() => {
           throw new Error('EISDIR: illegal operation on a directory, read');
         });
@@ -1242,6 +1261,9 @@ describe('SteeringTemplateProvider', () => {
         };
         mockVSCode.workspace.workspaceFolders = [invalidWorkspaceFolder];
 
+        // Mock file system operations - directory check fails, read succeeds but mkdir fails
+        mockFs.existsSync.mockReturnValue(false);
+        mockFs.readFileSync.mockReturnValue(templateContent);
         mockFs.mkdirSync.mockImplementation(() => {
           throw new Error('ENOENT: no such file or directory, mkdir');
         });
@@ -1270,6 +1292,14 @@ describe('SteeringTemplateProvider', () => {
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+
+        // Mock file system operations with specific content
+        mockFs.existsSync.mockReturnValue(true);
+        mockFs.readFileSync.mockImplementation((path: string) => {
+          if (path === templatePath) return largeContent;
+          return '';
+        });
+        mockFs.writeFileSync.mockReturnValue(undefined);
 
         // Act
         await provider.loadTemplate(templatePath);
@@ -1302,6 +1332,14 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations with specific content
+        mockFs.existsSync.mockReturnValue(true);
+        mockFs.readFileSync.mockImplementation((path: string) => {
+          if (path === templatePath) return templateContent;
+          return '';
+        });
+        mockFs.writeFileSync.mockReturnValue(undefined);
+
         // Act
         await provider.loadTemplate(templatePath);
 
@@ -1326,6 +1364,8 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations - directory exists, read fails
+        mockFs.existsSync.mockReturnValue(true);
         mockFs.readFileSync.mockImplementation(() => {
           throw specificError;
         });
@@ -1370,6 +1410,15 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations with specific content
+        mockFs.existsSync.mockReturnValue(true);
+        mockFs.readFileSync.mockImplementation((path: string) => {
+          if (path === templatePath1) return templateContent1;
+          if (path === templatePath2) return templateContent2;
+          return '';
+        });
+        mockFs.writeFileSync.mockReturnValue(undefined);
+
         // Act
         await provider.loadTemplate(templatePath1);
         await provider.loadTemplate(templatePath2);
@@ -1402,6 +1451,10 @@ describe('SteeringTemplateProvider', () => {
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
         mockVSCode.workspace.workspaceFolders = [workspaceFolder];
 
+        // Mock file system operations
+        mockFs.existsSync.mockReturnValue(true);
+        mockFs.writeFileSync.mockReturnValue(undefined);
+        
         // Mock readFileSync to succeed for first call, fail for second
         let callCount = 0;
         mockFs.readFileSync.mockImplementation((path: string) => {
