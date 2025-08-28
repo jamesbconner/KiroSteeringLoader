@@ -37,7 +37,7 @@ export default defineConfig({
     // Coverage configuration with v8
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html', 'json', 'lcov'],
+      reporter: ['text', 'html', 'json', 'lcov', 'text-summary'],
       reportsDirectory: './coverage',
       
       // Coverage thresholds (85% as specified in requirements)
@@ -45,7 +45,9 @@ export default defineConfig({
         lines: 85,
         functions: 85,
         branches: 85,
-        statements: 85
+        statements: 85,
+        // Per-file thresholds
+        perFile: true
       },
       
       // Include/exclude patterns
@@ -56,12 +58,29 @@ export default defineConfig({
         'tests/**',
         '**/*.d.ts',
         '**/*.test.ts',
-        '**/*.spec.ts'
+        '**/*.spec.ts',
+        'coverage/**',
+        '.vscode-test/**',
+        'scripts/**'
       ],
       
       // Fail build if coverage is below threshold
       skipFull: false,
-      all: true
+      all: true,
+      
+      // Clean coverage directory before each run
+      clean: true,
+      
+      // Enable branch coverage
+      branches: 85,
+      
+      // Watermarks for coverage reporting
+      watermarks: {
+        statements: [85, 95],
+        functions: [85, 95],
+        branches: [85, 95],
+        lines: [85, 95]
+      }
     },
     
     // TypeScript configuration

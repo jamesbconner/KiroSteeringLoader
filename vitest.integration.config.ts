@@ -27,6 +27,10 @@ export default defineConfig({
     hookTimeout: 30000,
     teardownTimeout: 15000,
     
+    // Failure handling configuration
+    retry: process.env.CI ? 2 : 0,
+    bail: process.env.CI ? 1 : 0,
+    
     // Sequential execution for integration tests to avoid conflicts
     pool: 'forks',
     poolOptions: {

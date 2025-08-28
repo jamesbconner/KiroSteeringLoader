@@ -7,6 +7,28 @@ import { beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 
 // Import VS Code mocks setup
 import '../mocks/setup';
+import { setupGlobalFailureHandling } from '../utils/failureHandler';
+
+// Determine test type from environment or config
+const getTestType = (): 'unit' | 'integration' | 'e2e' | 'performance' | 'memory' => {
+  const configPath = process.env.VITEST_CONFIG || '';
+  if (configPath.includes('unit')) return 'unit';
+  if (configPath.includes('integration')) return 'integration';
+  if (configPath.includes('e2e')) return 'e2e';
+  if (configPath.includes('performance')) return 'performance';
+  if (configPath.includes('memory')) return 'memory';
+  
+  // Check test file patterns
+  const testFile = process.env.VITEST_TEST_FILE || '';
+  if (testFile.includes('/unit/')) return 'unit';
+  if (testFile.includes('/integration/')) return 'integration';
+  if (testFile.includes('/e2e/')) return 'e2e';
+  if (testFile.includes('/performance/')) return 'performance';
+  if (testFile.includes('/memory/')) return 'memory';
+  
+  // Default to unit tests
+  return 'unit';
+};
 
 // Global test configuration
 beforeAll(async () => {
@@ -14,11 +36,24 @@ beforeAll(async () => {
   process.env.NODE_ENV = 'test';
   process.env.VSCODE_TEST_MODE = 'true';
   
+  // Setup failure handling
+  const testType = getTestType();
+  setupGlobalFailureHandling(testType);
+  
   // Initialize any global test resources
-  console.log('🧪 Initializing test environment...');
+  console.log(`🧪 Initializing test environment for ${testType} tests...`);
 });
 
 afterAll(async () => {
+  // Save failure report if there were any failures
+  try {
+    const { getGlobalFailureHandler } = await import('../utils/failureHandler');
+    const handler = getGlobalFailureHandler();
+    await handler.saveFailureReport();
+  } catch (error) {
+    // Handler might not be initialized if no failures occurred
+  }
+  
   // Clean up global test resources
   console.log('🧹 Cleaning up test environment...');
 });

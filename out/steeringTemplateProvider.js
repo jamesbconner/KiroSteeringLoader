@@ -53,7 +53,7 @@ export class SteeringTemplateProvider {
         }
     }
     async loadTemplate(templatePath) {
-        if (!templatePath) {
+        if (!templatePath || !templatePath.trim()) {
             vscode.window.showErrorMessage('No template path provided');
             return;
         }
@@ -62,8 +62,8 @@ export class SteeringTemplateProvider {
             vscode.window.showErrorMessage('No workspace folder open');
             return;
         }
-        const steeringDir = path.join(workspaceFolder.uri.fsPath, '.kiro', 'steering');
         try {
+            const steeringDir = path.join(workspaceFolder.uri.fsPath, '.kiro', 'steering');
             // Ensure .kiro/steering directory exists
             if (!fs.existsSync(steeringDir)) {
                 fs.mkdirSync(steeringDir, { recursive: true });

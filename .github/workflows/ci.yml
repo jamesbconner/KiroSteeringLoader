@@ -33,37 +33,109 @@ jobs:
       run: npm run compile
 
     - name: Run unit tests
-      run: npm run test || echo "Tests failed - configuration needs to be fixed"
+      id: unit-tests
+      run: npm run test:unit
       continue-on-error: true
 
-    - name: Run unit tests with coverage
-      run: npm run test:coverage || echo "Coverage tests failed - configuration needs to be fixed"
+    - name: Run integration tests
+      id: integration-tests
+      run: npm run test:integration
       continue-on-error: true
 
-    - name: Run integration tests (E2E)
-      run: npm run test:e2e || echo "E2E tests failed - configuration needs to be fixed"
+    - name: Run E2E tests
+      id: e2e-tests
+      run: npm run test:e2e
       env:
         DISPLAY: ':99.0'
-      if: runner.os == 'Linux'
-      continue-on-error: true
-
-    - name: Run integration tests (E2E) - Windows
-      run: npm run test:e2e || echo "E2E tests failed - configuration needs to be fixed"
-      if: runner.os == 'Windows'
-      continue-on-error: true
-
-    - name: Run integration tests (E2E) - macOS
-      run: npm run test:e2e || echo "E2E tests failed - configuration needs to be fixed"
-      if: runner.os == 'macOS'
       continue-on-error: true
 
     - name: Run performance tests
-      run: npm run test:performance || echo "Performance tests failed - configuration needs to be fixed"
+      id: performance-tests
+      run: npm run test:performance
       continue-on-error: true
 
     - name: Run memory usage tests
-      run: npm run test:memory || echo "Memory tests failed - configuration needs to be fixed"
+      id: memory-tests
+      run: npm run test:memory
       continue-on-error: true
+
+    - name: Generate test summary
+      if: always()
+      run: |
+        echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Unit Tests
+        if [ "${{ steps.unit-tests.outcome }}" == "success" ]; then
+          echo "✅ Unit Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Unit Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # Integration Tests
+        if [ "${{ steps.integration-tests.outcome }}" == "success" ]; then
+          echo "✅ Integration Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Integration Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # E2E Tests
+        if [ "${{ steps.e2e-tests.outcome }}" == "success" ]; then
+          echo "✅ E2E Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ E2E Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # Performance Tests
+        if [ "${{ steps.performance-tests.outcome }}" == "success" ]; then
+          echo "✅ Performance Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Performance Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        # Memory Tests
+        if [ "${{ steps.memory-tests.outcome }}" == "success" ]; then
+          echo "✅ Memory Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Memory Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Check test results and fail if any tests failed
+      if: always()
+      run: |
+        FAILED_TESTS=""
+        
+        if [ "${{ steps.unit-tests.outcome }}" != "success" ]; then
+          FAILED_TESTS="$FAILED_TESTS unit"
+        fi
+        
+        if [ "${{ steps.integration-tests.outcome }}" != "success" ]; then
+          FAILED_TESTS="$FAILED_TESTS integration"
+        fi
+        
+        if [ "${{ steps.e2e-tests.outcome }}" != "success" ]; then
+          FAILED_TESTS="$FAILED_TESTS e2e"
+        fi
+        
+        if [ "${{ steps.performance-tests.outcome }}" != "success" ]; then
+          FAILED_TESTS="$FAILED_TESTS performance"
+        fi
+        
+        if [ "${{ steps.memory-tests.outcome }}" != "success" ]; then
+          FAILED_TESTS="$FAILED_TESTS memory"
+        fi
+        
+        if [ -n "$FAILED_TESTS" ]; then
+          echo "❌ The following test suites failed:$FAILED_TESTS"
+          echo "Please check the test logs above for detailed error information."
+          
+          # Send failure notifications
+          npx tsx scripts/notify-test-failures.js || echo "Failed to send notifications"
+          
+          exit 1
+        else
+          echo "✅ All test suites passed successfully!"
+        fi
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4
@@ -71,10 +143,62 @@ jobs:
         file: ./coverage/lcov.info
         flags: unittests
         name: codecov-umbrella
-        fail_ci_if_error: false
+        fail_ci_if_error: true
       if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
 
-    - name: Upload test results
+    - name: Generate coverage badge
+      if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
+      run: |
+        # Generate coverage badge data
+        if [ -f "coverage/coverage-final.json" ]; then
+          echo "📊 Generating coverage badge..."
+          
+          # Extract overall coverage percentage
+          COVERAGE=$(node -e "
+            const fs = require('fs');
+            const coverage = JSON.parse(fs.readFileSync('coverage/coverage-final.json', 'utf8'));
+            let totalLines = 0, coveredLines = 0;
+            Object.values(coverage).forEach(file => {
+              if (file.path && !file.path.includes('node_modules') && !file.path.includes('tests/')) {
+                totalLines += file.lines?.total || 0;
+                coveredLines += file.lines?.covered || 0;
+              }
+            });
+            const percentage = totalLines > 0 ? Math.round((coveredLines / totalLines) * 100) : 0;
+            console.log(percentage);
+          ")
+          
+          echo "Coverage: ${COVERAGE}%"
+          echo "COVERAGE_PERCENTAGE=${COVERAGE}" >> $GITHUB_ENV
+          
+          # Create coverage badge JSON
+          COLOR="red"
+          if [ "$COVERAGE" -ge 85 ]; then
+            COLOR="brightgreen"
+          elif [ "$COVERAGE" -ge 70 ]; then
+            COLOR="yellow"
+          elif [ "$COVERAGE" -ge 50 ]; then
+            COLOR="orange"
+          fi
+          
+          mkdir -p coverage/badges
+          echo "{\"schemaVersion\": 1, \"label\": \"coverage\", \"message\": \"${COVERAGE}%\", \"color\": \"${COLOR}\"}" > coverage/badges/coverage.json
+        fi
+
+    - name: Generate detailed test failure report
+      if: always()
+      run: |
+        # Run the test failure reporter
+        npx tsx scripts/test-failure-reporter.js || true
+        
+        # Add detailed report to GitHub step summary if it exists
+        if [ -f "coverage/test-failure-report-*.md" ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Detailed Test Report" >> $GITHUB_STEP_SUMMARY
+          cat coverage/test-failure-report-*.md >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Upload test results and reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
@@ -85,6 +209,9 @@ jobs:
           coverage/performance-results.json
           coverage/memory-usage-report.json
           coverage/large-dataset-performance-report.json
+          coverage/test-failure-report-*.json
+          coverage/test-failure-report-*.md
+          coverage/badges/coverage.json
 
   lint:
     name: Lint and Type Check
@@ -157,38 +284,93 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Run coverage check
-      run: npm run test:coverage
+    - name: Download coverage artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: test-results-ubuntu-latest-20.x
+        path: coverage/
 
-    - name: Check coverage threshold
+    - name: Run comprehensive coverage processing
+      run: npm run coverage:quality-gate
+
+    - name: Check coverage quality gate
       run: |
-        # Extract coverage percentage from coverage report
-        COVERAGE=$(node -e "
-          const fs = require('fs');
-          const coverage = JSON.parse(fs.readFileSync('coverage/coverage-final.json', 'utf8'));
-          const totals = Object.values(coverage).reduce((acc, file) => {
-            Object.keys(file).forEach(key => {
-              if (key !== 'path') {
-                acc[key] = (acc[key] || { total: 0, covered: 0 });
-                acc[key].total += file[key].total || 0;
-                acc[key].covered += file[key].covered || 0;
-              }
-            });
-            return acc;
-          }, {});
-          const linesCoverage = (totals.lines.covered / totals.lines.total) * 100;
-          console.log(linesCoverage.toFixed(2));
-        ")
+        echo "🚪 Enforcing coverage quality gate..."
         
-        echo "Coverage: $COVERAGE%"
-        
-        # Fail if coverage is below 85%
-        if (( $(echo "$COVERAGE < 85" | bc -l) )); then
-          echo "Coverage $COVERAGE% is below required threshold of 85%"
+        # Run coverage quality gate check
+        if npm run coverage:check; then
+          echo "✅ Coverage quality gate passed"
+        else
+          echo "❌ Coverage quality gate failed"
+          echo "Coverage is below the required 85% threshold."
+          echo "Please add more tests to improve coverage before merging."
           exit 1
         fi
-        
-        echo "Coverage check passed: $COVERAGE% >= 85%"
+
+    - name: Upload enhanced coverage reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-reports
+        path: |
+          coverage/coverage-report-*.json
+          coverage/coverage-report-*.html
+          coverage/coverage-report-*.md
+          coverage/coverage-trend-analysis-*.json
+          coverage/coverage-trend-analysis-*.md
+          coverage/coverage-trends.json
+          coverage/coverage-dashboard.html
+
+    - name: Comment coverage report on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          try {
+            // Find the latest coverage report markdown file
+            const coverageDir = 'coverage';
+            const files = fs.readdirSync(coverageDir);
+            const reportFile = files
+              .filter(f => f.startsWith('coverage-report-') && f.endsWith('.md'))
+              .sort()
+              .pop();
+            
+            let commentBody = '## 📊 Coverage Quality Gate Report\n\n';
+            
+            if (reportFile) {
+              const reportPath = path.join(coverageDir, reportFile);
+              const reportContent = fs.readFileSync(reportPath, 'utf8');
+              commentBody += reportContent;
+            } else {
+              commentBody += '⚠️ No coverage report found.\n';
+            }
+            
+            // Add coverage badge if available
+            const badgePath = path.join(coverageDir, 'badges', 'coverage.json');
+            if (fs.existsSync(badgePath)) {
+              const badgeData = JSON.parse(fs.readFileSync(badgePath, 'utf8'));
+              const badgeUrl = `https://img.shields.io/badge/coverage-${badgeData.message}-${badgeData.color}`;
+              commentBody += `\n![Coverage Badge](${badgeUrl})\n`;
+            }
+            
+            // Add link to detailed dashboard
+            commentBody += '\n---\n';
+            commentBody += '📈 **[View Detailed Coverage Dashboard](../coverage/coverage-dashboard.html)**\n';
+            commentBody += '📊 **[View Coverage Trends](../coverage/)**\n';
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
+          } catch (error) {
+            console.log('Failed to post coverage comment:', error.message);
+            // Don't fail the build for comment posting errors
+          }
 
   performance-regression:
     name: Performance Regression Check

@@ -1,0 +1,218 @@
+name: Test Health Check
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allow manual triggering
+    inputs:
+      create_issue:
+        description: 'Create GitHub issue if problems found'
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Need full history for trend analysis
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Create reports directory
+      run: mkdir -p tests/reports
+    
+    - name: Run test health check
+      id: health_check
+      run: |
+        # Run health check and capture exit code
+        npm run test:health-check || echo "health_check_failed=true" >> $GITHUB_OUTPUT
+        
+        # Check if critical issues were found
+        if [ -f "tests/reports/maintenance-summary.md" ]; then
+          if grep -q "URGENT" tests/reports/maintenance-summary.md; then
+            echo "critical_issues=true" >> $GITHUB_OUTPUT
+          fi
+          
+          if grep -q "security vulnerabilities" tests/reports/maintenance-summary.md; then
+            echo "security_issues=true" >> $GITHUB_OUTPUT
+          fi
+        fi
+    
+    - name: Upload health reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: health-reports-${{ github.run_number }}
+        path: tests/reports/
+        retention-days: 30
+    
+    - name: Generate health badge
+      if: always()
+      run: |
+        # Extract health score from summary
+        if [ -f "tests/reports/maintenance-summary.md" ]; then
+          SCORE=$(grep "Overall Health Score" tests/reports/maintenance-summary.md | grep -o '[0-9]\+\.[0-9]\+' | head -1)
+          
+          if [ ! -z "$SCORE" ]; then
+            # Determine badge color based on score
+            if (( $(echo "$SCORE >= 90" | bc -l) )); then
+              COLOR="brightgreen"
+            elif (( $(echo "$SCORE >= 70" | bc -l) )); then
+              COLOR="yellow"
+            else
+              COLOR="red"
+            fi
+            
+            # Create badge URL
+            BADGE_URL="https://img.shields.io/badge/Test%20Health-${SCORE}%2F100-${COLOR}"
+            echo "HEALTH_BADGE_URL=$BADGE_URL" >> $GITHUB_ENV
+          fi
+        fi
+    
+    - name: Comment on PR if health issues found
+      if: github.event_name == 'pull_request' && steps.health_check.outputs.health_check_failed == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          if (fs.existsSync('tests/reports/maintenance-summary.md')) {
+            const summary = fs.readFileSync('tests/reports/maintenance-summary.md', 'utf8');
+            
+            const comment = `## 🏥 Test Health Check Results
+            
+            The automated test health check has detected some issues:
+            
+            ${summary}
+            
+            Please review the full reports in the workflow artifacts and address any critical issues before merging.
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+    
+    - name: Create issue for critical problems
+      if: |
+        always() && 
+        (steps.health_check.outputs.critical_issues == 'true' || steps.health_check.outputs.security_issues == 'true') &&
+        (github.event.inputs.create_issue == 'true' || github.event.inputs.create_issue == '')
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let issueBody = '## 🚨 Critical Test Health Issues Detected\n\n';
+          issueBody += `**Date:** ${new Date().toISOString().split('T')[0]}\n`;
+          issueBody += `**Workflow:** [${context.workflow}](${context.payload.repository.html_url}/actions/runs/${context.runId})\n\n`;
+          
+          if (fs.existsSync('tests/reports/maintenance-summary.md')) {
+            const summary = fs.readFileSync('tests/reports/maintenance-summary.md', 'utf8');
+            issueBody += summary;
+          } else {
+            issueBody += 'Critical issues were detected but summary report is not available. Please check the workflow logs.\n';
+          }
+          
+          issueBody += '\n## Action Required\n';
+          issueBody += '- [ ] Review security vulnerabilities and apply updates\n';
+          issueBody += '- [ ] Fix failing tests\n';
+          issueBody += '- [ ] Address flaky tests\n';
+          issueBody += '- [ ] Review full reports in workflow artifacts\n';
+          
+          // Check if similar issue already exists
+          const existingIssues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: 'test-health,critical',
+            state: 'open'
+          });
+          
+          if (existingIssues.data.length === 0) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Critical Test Health Issues Detected',
+              body: issueBody,
+              labels: ['test-health', 'critical', 'maintenance']
+            });
+          } else {
+            // Update existing issue
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: existingIssues.data[0].number,
+              body: `## Updated Health Check Results\n\n${issueBody}`
+            });
+          }
+    
+    - name: Update README badge (if applicable)
+      if: always() && env.HEALTH_BADGE_URL
+      run: |
+        echo "Health badge URL: $HEALTH_BADGE_URL"
+        # This could be used to update a README badge if desired
+    
+    - name: Notify on Slack/Discord (optional)
+      if: steps.health_check.outputs.critical_issues == 'true'
+      run: |
+        echo "Critical issues detected - consider adding Slack/Discord notification here"
+        # Add webhook notification if desired
+    
+    - name: Set job status
+      if: steps.health_check.outputs.health_check_failed == 'true'
+      run: |
+        echo "Health check failed - marking job as failed"
+        exit 1
+
+  # Optional: Run health check on different OS
+  health-check-windows:
+    runs-on: windows-latest
+    if: github.event_name == 'workflow_dispatch'
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run health check (Windows)
+      run: npm run test:health-check
+      continue-on-error: true
+    
+    - name: Upload Windows reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: health-reports-windows-${{ github.run_number }}
+        path: tests/reports/
+        retention-days: 7

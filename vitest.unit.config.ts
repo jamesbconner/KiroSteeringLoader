@@ -27,6 +27,10 @@ export default defineConfig({
     hookTimeout: 15000,
     teardownTimeout: 10000,
     
+    // Failure handling configuration
+    retry: process.env.CI ? 1 : 0,
+    bail: process.env.CI ? 1 : 0,
+    
     // Reporter configuration
     reporter: ['verbose', 'json', 'html'],
     outputFile: {

@@ -5,12 +5,24 @@
 node_modules
 node_modules/*
 
+# Build Output
+dist/
+build/
+out/
+*.tsbuildinfo
+*.d.ts.map
+
+# TypeScript Cache
+*.tscache
+
 # Test Coverage and Results
 coverage/
 *.lcov
 test-results.json
 test-results.html
 e2e-results.json
+junit.xml
+coverage-final.json
 
 # VS Code Test
 .vscode-test/
@@ -19,4 +31,114 @@ e2e-results.json
 # Test Artifacts
 tests/fixtures/temp/
 tests/fixtures/workspaces/temp-*
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime Data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency Directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Storybook build outputs
+.out
+.storybook-out
+storybook-static
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Package manager lock files (if using multiple managers)
+# Uncomment the ones you don't use:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Turbo
+.turbo
+
+# Vercel
+.vercel
+
+# TypeDoc
+# docs/
+
+# Webpack
+.webpack/
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
 
