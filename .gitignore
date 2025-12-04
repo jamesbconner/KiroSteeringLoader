@@ -1,5 +1,5 @@
-# Kiro Steering Docs
-.kiro
+# Kiro Steering Docs (exclude user-specific settings but keep templates)
+.kiro/settings/
 
 # Node Modules
 node_modules
@@ -142,3 +142,8 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# Zip files
+*.zip
+*.rar
+*.7zip
+*.7z
