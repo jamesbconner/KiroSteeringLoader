@@ -45,6 +45,7 @@ export {
   MockThemeIcon,
   MockUri,
   MockDisposable,
+  MockOutputChannel,
   TreeItemCollapsibleState,
   ConfigurationTarget,
   ExtensionMode

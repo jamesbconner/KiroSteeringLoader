@@ -268,6 +268,28 @@ export const createFileSystemMock = (): MockedFileSystem => ({
 // Default export for easier importing
 export const mockFs = createFileSystemMock();
 
+// Export as default for compatibility
+export default mockFs;
+
+// Export promises API for fs/promises compatibility
+export const promises = {
+  readFile: vi.fn().mockImplementation(async (path: string, encoding?: BufferEncoding) => {
+    return mockFs.readFileSync(path, encoding);
+  }),
+  writeFile: vi.fn().mockImplementation(async (path: string, data: string) => {
+    return mockFs.writeFileSync(path, data);
+  }),
+  mkdir: vi.fn().mockImplementation(async (path: string, options?: { recursive?: boolean }) => {
+    return mockFs.mkdirSync(path, options);
+  }),
+  readdir: vi.fn().mockImplementation(async (path: string) => {
+    return mockFs.readdirSync(path);
+  }),
+  rm: vi.fn().mockImplementation(async (path: string, options?: { recursive?: boolean; force?: boolean }) => {
+    return mockFs.rmSync(path, options);
+  })
+};
+
 /**
  * File system mock utilities for test setup and management
  */

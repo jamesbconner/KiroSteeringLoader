@@ -336,6 +336,9 @@ export const createPathMock = (): MockedPath => ({
 // Default export for easier importing
 export const mockPath = createPathMock();
 
+// Export as default for compatibility
+export default mockPath;
+
 /**
  * Path mock utilities for test setup and management
  */

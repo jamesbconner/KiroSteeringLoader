@@ -3,7 +3,6 @@
   "displayName": "Kiro Steering Loader",
   "description": "Load steering agent templates into Kiro projects",
   "version": "0.0.3",
-
   "publisher": "jamesbconner",
   "license": "MIT",
   "icon": "icon.png",
@@ -45,6 +44,11 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "kiroSteeringLoader.forceRefresh",
+        "title": "Force Refresh (Clear Cache)",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "kiroSteeringLoader.loadTemplate",
         "title": "Load Template"
       },
@@ -53,6 +57,42 @@
         "title": "Kiro Steering Loader: Set Templates Path",
         "category": "Kiro Steering Loader",
         "icon": "$(folder-opened)"
+      },
+      {
+        "command": "kiroSteeringLoader.configureGitHubRepository",
+        "title": "Kiro Steering Loader: Configure GitHub Repository",
+        "category": "Kiro Steering Loader",
+        "icon": "$(github)"
+      },
+      {
+        "command": "kiroSteeringLoader.configureGitHubToken",
+        "title": "Kiro Steering Loader: Configure GitHub Token",
+        "category": "Kiro Steering Loader",
+        "icon": "$(key)"
+      },
+      {
+        "command": "kiroSteeringLoader.clearGitHubToken",
+        "title": "Kiro Steering Loader: Clear GitHub Token",
+        "category": "Kiro Steering Loader",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "kiroSteeringLoader.clearCache",
+        "title": "Kiro Steering Loader: Clear Cache",
+        "category": "Kiro Steering Loader",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "kiroSteeringLoader.switchToLocalMode",
+        "title": "Kiro Steering Loader: Switch to Local Mode",
+        "category": "Kiro Steering Loader",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "kiroSteeringLoader.switchToGitHubMode",
+        "title": "Kiro Steering Loader: Switch to GitHub Mode",
+        "category": "Kiro Steering Loader",
+        "icon": "$(github)"
       }
     ],
     "menus": {
@@ -82,7 +122,79 @@
         "kiroSteeringLoader.templatesPath": {
           "type": "string",
           "default": "",
-          "description": "Path to the directory containing steering agent templates"
+          "markdownDescription": "**[Legacy Local Mode]** Path to the directory containing steering agent templates on your local file system. This setting is maintained for backward compatibility. For new setups, use `kiroSteeringLoader.repository` to load templates from GitHub.",
+          "scope": "window",
+          "order": 2
+        },
+        "kiroSteeringLoader.repository": {
+          "type": "object",
+          "default": null,
+          "markdownDescription": "**[GitHub Mode]** Configure a GitHub repository to load steering templates from. This is the recommended approach for sharing and managing templates across teams.\n\n**Example:**\n```json\n{\n  \"owner\": \"your-username\",\n  \"repo\": \"steering-templates\",\n  \"path\": \"templates\",\n  \"branch\": \"main\"\n}\n```\n\nUse the command `Kiro Steering Loader: Configure GitHub Repository` to set this up interactively.",
+          "scope": "window",
+          "order": 1,
+          "properties": {
+            "owner": {
+              "type": "string",
+              "description": "GitHub repository owner (username or organization name)",
+              "examples": [
+                "octocat",
+                "microsoft",
+                "your-org"
+              ]
+            },
+            "repo": {
+              "type": "string",
+              "description": "GitHub repository name",
+              "examples": [
+                "steering-templates",
+                "kiro-templates",
+                "agent-prompts"
+              ]
+            },
+            "path": {
+              "type": "string",
+              "default": "",
+              "description": "Optional subdirectory path within the repository where templates are located. Leave empty to use the repository root.",
+              "examples": [
+                "templates",
+                "steering",
+                "prompts/steering"
+              ]
+            },
+            "branch": {
+              "type": "string",
+              "default": "main",
+              "description": "Git branch to fetch templates from",
+              "examples": [
+                "main",
+                "master",
+                "develop",
+                "production"
+              ]
+            }
+          },
+          "required": [
+            "owner",
+            "repo"
+          ]
+        },
+        "kiroSteeringLoader.cache.ttl": {
+          "type": "number",
+          "default": 300,
+          "minimum": 60,
+          "maximum": 3600,
+          "markdownDescription": "Cache time-to-live in seconds for GitHub API responses. Templates are cached to reduce API calls and improve performance. Default is 5 minutes (300 seconds).",
+          "scope": "window",
+          "order": 3
+        },
+        "kiroSteeringLoader.cache.maxEntries": {
+          "type": "number",
+          "default": 100,
+          "minimum": 10,
+          "maximum": 1000,
+          "markdownDescription": "Maximum number of cache entries to store. Older entries are evicted when this limit is reached using an LRU (Least Recently Used) strategy.",
+          "scope": "window",
+          "order": 4
         }
       }
     }
@@ -132,11 +244,12 @@
     "test:maintenance:full": "npm run test:maintenance && npm run test:dependency-check && npm run test:flaky-check"
   },
   "devDependencies": {
-    "@types/node": "20.x",
+    "@types/node": "^20.19.25",
     "@types/vscode": "^1.74.0",
     "@vitest/coverage-v8": "^1.6.0",
     "@vitest/ui": "^1.6.0",
     "@vscode/test-electron": "^2.3.8",
+    "fast-check": "^4.3.0",
     "tsx": "^4.20.5",
     "typescript": "^5.3.0",
     "vitest": "^1.6.0"

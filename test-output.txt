@@ -1,0 +1,492 @@
+
+> kiro-steering-loader@0.0.3 test:unit
+> vitest run --config vitest.unit.config.ts
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+[33mTesting types with tsc and vue-tsc is an experimental feature.
+Breaking changes might not follow SemVer, please pin Vitest's version when using it.[39m
+
+[7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90mD:/Documents/Code/KiroSteeringLoader[39m
+
+[90mstdout[2m | tests/unit/templateItem.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith template item type[2m > [22mshould initialize with correct properties for template type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith template item type[2m > [22mshould set correct tooltip for template type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith template item type[2m > [22mshould set correct command for template type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith template item type[2m > [22mshould set correct icon for template type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith template item type[2m > [22mshould handle different template paths correctly
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith setup item type[2m > [22mshould initialize with correct properties for setup type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith setup item type[2m > [22mshould set correct tooltip for setup type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith setup item type[2m > [22mshould set correct command for setup type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith setup item type[2m > [22mshould set correct icon for setup type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith setup item type[2m > [22mshould not include arguments in command for setup type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith info item type[2m > [22mshould initialize with correct properties for info type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith info item type[2m > [22mshould set correct icon for info type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith info item type[2m > [22mshould not set tooltip for info type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith info item type[2m > [22mshould not set command for info type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith info item type[2m > [22mshould handle different info messages
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith error item type[2m > [22mshould initialize with correct properties for error type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith error item type[2m > [22mshould set correct icon for error type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith error item type[2m > [22mshould not set tooltip for error type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith error item type[2m > [22mshould not set command for error type
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mConstructor[2m > [22mwith error item type[2m > [22mshould handle different error messages
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mProperty Assignment[2m > [22mshould correctly assign all constructor parameters
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mProperty Assignment[2m > [22mshould handle empty and null values correctly
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mProperty Assignment[2m > [22mshould handle special characters in labels and paths
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mTreeItem Inheritance Behavior[2m > [22mshould inherit from TreeItem base class
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mTreeItem Inheritance Behavior[2m > [22mshould call super constructor with label and collapsibleState
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mTreeItem Inheritance Behavior[2m > [22mshould maintain TreeItem properties alongside custom properties
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mTreeItem Inheritance Behavior[2m > [22mshould handle different collapsible states correctly
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mCommand Configuration[2m > [22mshould configure loadTemplate command for template items
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mCommand Configuration[2m > [22mshould configure setTemplatesPath command for setup items
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mCommand Configuration[2m > [22mshould not configure command for info items
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mCommand Configuration[2m > [22mshould not configure command for error items
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mCommand Configuration[2m > [22mshould include correct arguments in template command
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mCommand Configuration[2m > [22mshould not include arguments in setup command
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mIcon Assignment[2m > [22mshould assign file-text icon for template items
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mIcon Assignment[2m > [22mshould assign folder-opened icon for setup items
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mIcon Assignment[2m > [22mshould assign info icon for info items
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mIcon Assignment[2m > [22mshould assign error icon for error items
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mIcon Assignment[2m > [22mshould create ThemeIcon instances for all item types
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mEdge Cases and Error Handling[2m > [22mshould handle undefined values gracefully
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mEdge Cases and Error Handling[2m > [22mshould handle very long labels and paths
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mEdge Cases and Error Handling[2m > [22mshould handle all valid TreeItemCollapsibleState values
+ [32m✓[39m tests/unit/templateItem.test.ts[2m > [22mTemplateItem[2m > [22mEdge Cases and Error Handling[2m > [22mshould maintain immutability of readonly properties
+[90mstdout[2m | tests/unit/templateItem.test.ts[22m[39m
+🧹 Cleaning up test environment...
+
+[90mstdout[2m | tests/unit/errorHandler.unit.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format NETWORK_ERROR with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format TIMEOUT with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format REPOSITORY_NOT_FOUND with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format UNAUTHORIZED with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format RATE_LIMIT_EXCEEDED with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format FORBIDDEN with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format PERMISSION_DENIED with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format DISK_FULL with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format FILE_EXISTS with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format INVALID_CONFIG with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format MISSING_CONFIG with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format CACHE_CORRUPTED with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Message Formatting[2m > [22mshould format CACHE_QUOTA_EXCEEDED with user-friendly message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Action Suggestions[2m > [22mshould suggest "Configure Token" for UNAUTHORIZED errors
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Action Suggestions[2m > [22mshould suggest "Configure Token" and "View Rate Limit" for RATE_LIMIT_EXCEEDED
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Action Suggestions[2m > [22mshould suggest "Configure Repository" for REPOSITORY_NOT_FOUND
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Action Suggestions[2m > [22mshould suggest "Clear Cache" for CACHE_CORRUPTED
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Action Suggestions[2m > [22mshould suggest "Retry" for NETWORK_ERROR
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Action Suggestions[2m > [22mshould suggest "Use Local Mode" for MISSING_CONFIG
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Action Execution[2m > [22mshould execute "Configure Token" command when action is selected
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Action Execution[2m > [22mshould execute "Configure Repository" command when action is selected
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Action Execution[2m > [22mshould execute "Clear Cache" command when action is selected
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Action Execution[2m > [22mshould execute "Retry" command when action is selected
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Action Execution[2m > [22mshould show output channel when "View Output" is selected
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mGraceful Degradation[2m > [22mshould handle non-GitHubSteeringError errors gracefully
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mGraceful Degradation[2m > [22mshould handle unknown error types gracefully
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mGraceful Degradation[2m > [22mshould handle errors without stack traces
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mLogging Controls[2m > [22mshould respect showNotification option
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mLogging Controls[2m > [22mshould respect logToOutput option
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mLogging Controls[2m > [22mshould respect suggestActions option
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mOutput Channel Management[2m > [22mshould show output channel when requested
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mOutput Channel Management[2m > [22mshould clear output channel when requested
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mOutput Channel Management[2m > [22mshould dispose output channel on dispose
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Statistics[2m > [22mshould track error counts by code
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mError Statistics[2m > [22mshould return empty stats for new handler
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mRetry Logic and Exponential Backoff[2m > [22mshould handle transient network errors with retry
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mRetry Logic and Exponential Backoff[2m > [22mshould log retry attempts in error context
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mRetry Logic and Exponential Backoff[2m > [22mshould handle timeout errors appropriately
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mRetry Logic and Exponential Backoff[2m > [22mshould not suggest retry for non-retryable errors
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mRetry Logic and Exponential Backoff[2m > [22mshould suggest retry for network errors
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mRetry Logic and Exponential Backoff[2m > [22mshould suggest retry for timeout errors
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mGraceful Degradation Scenarios[2m > [22mshould handle rate limit errors with cache fallback suggestion
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mGraceful Degradation Scenarios[2m > [22mshould handle repository not found with configuration suggestion
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mGraceful Degradation Scenarios[2m > [22mshould handle cache corruption with clear cache suggestion
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mGraceful Degradation Scenarios[2m > [22mshould handle missing configuration with setup suggestions
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mGraceful Degradation Scenarios[2m > [22mshould handle file system errors gracefully
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mGraceful Degradation Scenarios[2m > [22mshould handle disk full errors with clear message
+ [32m✓[39m tests/unit/errorHandler.unit.test.ts[2m > [22mErrorHandler Unit Tests[2m > [22mGraceful Degradation Scenarios[2m > [22mshould handle forbidden errors with permission guidance
+[90mstdout[2m | tests/unit/errorHandler.unit.test.ts[22m[39m
+🧹 Cleaning up test environment...
+
+[90mstdout[2m | tests/unit/steeringTemplateProvider.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+
+[90mstdout[2m | tests/unit/loadTemplateTests.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+
+ [31m×[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22msuccessful template loading[2m > [22mshould load template successfully with proper file operations and directory creation
+[31m   → expected "spy" to be called with arguments: [ …(2) ][90m
+
+Received: 
+
+[31m[90m
+
+Number of calls: [1m0[22m
+[31m[39m
+[31m   → [vitest] No "default" export is defined on the "path" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+ [31m×[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22msuccessful template loading[2m > [22mshould create .kiro/steering directory when it does not exist
+[31m   → expected "spy" to be called with arguments: [ …(2) ][90m
+
+Received: 
+
+[31m[90m
+
+Number of calls: [1m0[22m
+[31m[39m
+[31m   → [vitest] No "default" export is defined on the "path" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+ [32m✓[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22msuccessful template loading[2m > [22mshould not create directory when .kiro/steering already exists
+ [31m×[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22msuccessful template loading[2m > [22mshould handle empty template files
+[31m   → expected "spy" to be called with arguments: [ …(2) ][90m
+
+Received: 
+
+[31m[90m
+
+Number of calls: [1m0[22m
+[31m[39m
+[31m   → [vitest] No "default" export is defined on the "path" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+ [32m✓[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22merror handling for missing template paths[2m > [22mshould show error message when template path is empty string
+ [32m✓[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22merror handling for missing template paths[2m > [22mshould show error message when template path is undefined
+ [32m✓[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22merror handling for missing template paths[2m > [22mshould show error message when template path is null
+ [32m✓[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22merror handling for missing workspace folders[2m > [22mshould show error message when no workspace folders are open
+ [32m✓[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22merror handling for missing workspace folders[2m > [22mshould show error message when workspace folders array is empty
+ [31m×[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22merror handling for file system errors[2m > [22mshould handle template file not found error
+[31m   → expected "spy" to be called with arguments: [ Array(1) ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[2m  Array [[22m
+[32m-   "Failed to load template: Error: ENOENT: no such file or directory, open '/test/templates/nonexistent.md'",[90m
+[31m+   "ENOENT: no such file or directory, open '/test/templates/nonexistent.md'",[90m
+[31m+   "Retry",[90m
+[31m+   "View Output",[90m
+[2m  ][22m
+
+[1m  2nd spy call:
+
+[22m[2m  Array [[22m
+[32m-   "Failed to load template: Error: ENOENT: no such file or directory, open '/test/templates/nonexistent.md'",[90m
+[31m+   "Failed to load template: ENOENT: no such file or directory, open '/test/templates/nonexistent.md'",[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m2[22m
+[31m[39m
+[31m   → [vitest] No "default" export is defined on the "path" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+ [31m×[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22merror handling for file system errors[2m > [22mshould handle permission denied error when reading template
+[31m   → expected "spy" to be called with arguments: [ Array(1) ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[2m  Array [[22m
+[32m-   "Failed to load template: Error: EACCES: permission denied, open '/test/templates/restricted.md'",[90m
+[31m+   "EACCES: permission denied, open '/test/templates/restricted.md'",[90m
+[31m+   "Retry",[90m
+[31m+   "View Output",[90m
+[2m  ][22m
+
+[1m  2nd spy call:
+
+[22m[2m  Array [[22m
+[32m-   "Failed to load template: Error: EACCES: permission denied, open '/test/templates/restricted.md'",[90m
+[31m+   "Failed to load template: EACCES: permission denied, open '/test/templates/restricted.md'",[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m2[22m
+[31m[39m
+[31m   → [vitest] No "default" export is defined on the "path" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+ [31m×[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22merror handling for file system errors[2m > [22mshould handle permission denied error when creating directory
+[31m   → expected "spy" to be called with arguments: [ Array(1) ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[2m  Array [[22m
+[32m-   "Failed to load template: Error: EACCES: permission denied, mkdir '/test/workspace/.kiro'",[90m
+[31m+   "[vitest] No \"promises\" export is defined on the \"fs\" mock. Did you forget to return it from \"vi.mock\"?[90m
+[31m+ If you need to partially mock a module, you can use \"importOriginal\" helper inside:[90m
+[31m+ ",[90m
+[31m+   "Retry",[90m
+[31m+   "View Output",[90m
+[2m  ][22m
+
+[1m  2nd spy call:
+
+[22m[2m  Array [[22m
+[32m-   "Failed to load template: Error: EACCES: permission denied, mkdir '/test/workspace/.kiro'",[90m
+[31m+   "[vitest] No \"promises\" export is defined on the \"fs\" mock. Did you forget to return it from \"vi.mock\"?[90m
+[31m+ If you need to partially mock a module, you can use \"importOriginal\" helper inside:[90m
+[31m+ ",[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m2[22m
+[31m[39m
+[31m   → [vitest] No "default" export is defined on the "path" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+ [31m×[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22merror handling for file system errors[2m > [22mshould handle permission denied error when writing template file
+[31m   → expected "spy" to be called with arguments: [ Array(1) ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[2m  Array [[22m
+[32m-   "Failed to load template: Error: EACCES: permission denied, open '/test/workspace/.kiro/steering/template.md'",[90m
+[31m+   "[vitest] No \"promises\" export is defined on the \"fs\" mock. Did you forget to return it from \"vi.mock\"?[90m
+[31m+ If you need to partially mock a module, you can use \"importOriginal\" helper inside:[90m
+[31m+ ",[90m
+[31m+   "Retry",[90m
+[31m+   "View Output",[90m
+[2m  ][22m
+
+[1m  2nd spy call:
+
+[22m[2m  Array [[22m
+[32m-   "Failed to load template: Error: EACCES: permission denied, open '/test/workspace/.kiro/steering/template.md'",[90m
+[31m+   "[vitest] No \"promises\" export is defined on the \"fs\" mock. Did you forget to return it from \"vi.mock\"?[90m
+[31m+ If you need to partially mock a module, you can use \"importOriginal\" helper inside:[90m
+[31m+ ",[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m2[22m
+[31m[39m
+[31m   → [vitest] No "default" export is defined on the "path" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+ [31m×[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22muser feedback verification[2m > [22mshould show success message with correct template name
+[31m   → expected "spy" to be called 1 times, but got 0 times[39m
+[31m   → [vitest] No "default" export is defined on the "path" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+ [31m×[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22muser feedback verification[2m > [22mshould show error message with full error details
+[31m   → expected "spy" to be called 1 times, but got 2 times[39m
+[31m   → [vitest] No "default" export is defined on the "path" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+ [31m×[39m tests/unit/loadTemplateTests.test.ts[2m > [22mSteeringTemplateProvider loadTemplate method[2m > [22muser feedback verification[2m > [22mshould handle multiple consecutive loadTemplate calls
+[31m   → expected "spy" to be called 2 times, but got 0 times[39m
+[31m   → [vitest] No "default" export is defined on the "path" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+[39m
+[90mstdout[2m | tests/unit/loadTemplateTests.test.ts[22m[39m
+🧹 Cleaning up test environment...
+
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mBasic File System Operations[2m > [22mshould mock fs.existsSync correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mBasic File System Operations[2m > [22mshould mock fs.readdirSync correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mBasic File System Operations[2m > [22mshould mock fs.readFileSync correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mBasic File System Operations[2m > [22mshould mock fs.writeFileSync correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mBasic File System Operations[2m > [22mshould mock fs.mkdirSync correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mPath Operations[2m > [22mshould mock path.join correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mPath Operations[2m > [22mshould handle Windows paths correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mPath Operations[2m > [22mshould handle cross-platform path scenarios
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mFile System Scenarios[2m > [22mshould set up templates directory scenario correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mFile System Scenarios[2m > [22mshould set up empty templates directory scenario correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mFile System Scenarios[2m > [22mshould set up workspace with steering scenario correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mFile System Scenarios[2m > [22mshould set up workspace without kiro scenario correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mTest Helpers[2m > [22mshould set up successful template loading scenario
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mTest Helpers[2m > [22mshould set up no templates path scenario
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mTest Helpers[2m > [22mshould set up templates path not found scenario
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mTest Helpers[2m > [22mshould set up empty templates directory scenario
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mTest Helpers[2m > [22mshould set up Windows platform scenario
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mTest Helpers[2m > [22mshould set up complex templates structure scenario
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mFile System State Management[2m > [22mshould reset file system state correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mFile System State Management[2m > [22mshould add and remove files correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mFile System State Management[2m > [22mshould add and remove directories correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mFile System State Management[2m > [22mshould handle nested directory removal correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mCross-Platform Path Handling[2m > [22mshould handle POSIX paths correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mCross-Platform Path Handling[2m > [22mshould handle Windows paths correctly
+ [32m✓[39m tests/unit/fileSystemMocks.test.ts[2m > [22mFile System Mocks[2m > [22mCross-Platform Path Handling[2m > [22mshould normalize paths consistently
+[90mstdout[2m | tests/unit/fileSystemMocks.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+🧹 Cleaning up test environment...
+
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould create parent directory nodes for each unique directory path
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould place file nodes as children of their respective directories
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould handle nested directories correctly
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould filter templates by directory path
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould return only files within specified directory
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould filter templates by tag
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould return empty array when no templates have the tag
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould handle templates with no tags
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould get all unique directory paths
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould flatten tree back to template list
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould handle empty template list
+ [32m✓[39m tests/unit/treeBuilder.property.test.ts[2m > [22mTree Builder - Property Tests[2m > [22mshould handle single file at root
+[90mstdout[2m | tests/unit/treeBuilder.property.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+🧹 Cleaning up test environment...
+
+[90mstderr[2m | tests/unit/testHelpers.test.ts[2m > [22m[2mTest Helper Utilities[2m > [22m[2mCleanup Manager[2m > [22m[2mshould handle cleanup task failures gracefully[22m[39m
+Cleanup task 'failing-cleanup' failed: Error: Cleanup failed
+    at Object.cleanup [90m(D:\Documents\Code\KiroSteeringLoader\[39mtests\unit\testHelpers.test.ts:289:17[90m)[39m
+    at CleanupManager.executeCleanup [90m(D:\Documents\Code\KiroSteeringLoader\[39mtests\utils\cleanup.ts:107:22[90m)[39m
+    at [90mD:\Documents\Code\KiroSteeringLoader\[39mtests\unit\testHelpers.test.ts:295:35
+    at [90mfile:///D:/Documents/Code/KiroSteeringLoader/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:135:14
+    at [90mfile:///D:/Documents/Code/KiroSteeringLoader/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:60:26
+    at runTest [90m(file:///D:/Documents/Code/KiroSteeringLoader/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:781:17[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at runSuite [90m(file:///D:/Documents/Code/KiroSteeringLoader/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:909:15[90m)[39m
+    at runSuite [90m(file:///D:/Documents/Code/KiroSteeringLoader/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:909:15[90m)[39m
+    at runSuite [90m(file:///D:/Documents/Code/KiroSteeringLoader/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:909:15[90m)[39m
+
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mTestHelpers[2m > [22mshould create mock extension context
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mTestHelpers[2m > [22mshould create mock workspace folder
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mTestHelpers[2m > [22mshould create mock configuration
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mTestHelpers[2m > [22mshould setup test workspace
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mTestHelpers[2m > [22mshould setup test templates directory
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mTestHelpers[2m > [22mshould create temporary directory
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mTestHelpers[2m > [22mshould track and cleanup resources
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mCommon Test Scenarios[2m > [22mshould provide no configuration scenario
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mCommon Test Scenarios[2m > [22mshould provide valid templates directory scenario
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mCommon Test Scenarios[2m > [22mshould provide non-existent templates directory scenario
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mFixture Factory[2m > [22mshould create template fixture
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mFixture Factory[2m > [22mshould create multiple template fixtures
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mFixture Factory[2m > [22mshould create workspace fixture
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mFixture Factory[2m > [22mshould create configuration fixture
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mType Assertions[2m > [22mshould assert type correctly
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mType Assertions[2m > [22mshould throw on incorrect type assertion
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mType Assertions[2m > [22mshould expect type and return value
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mType Assertions[2m > [22mshould assert instance correctly
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mType Assertions[2m > [22mshould throw on incorrect instance assertion
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mCleanup Manager[2m > [22mshould register and execute cleanup tasks
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mCleanup Manager[2m > [22mshould track and cleanup resources
+ [32m✓[39m tests/unit/testHelpers.test.ts[2m > [22mTest Helper Utilities[2m > [22mCleanup Manager[2m > [22mshould handle cleanup task failures gracefully
+[90mstdout[2m | tests/unit/testHelpers.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+🧹 Cleaning up test environment...
+
+[90mstdout[2m | tests/unit/errorHandler.property.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+🧹 Cleaning up test environment...
+
+ [32m✓[39m tests/unit/errorHandler.property.test.ts[2m > [22mErrorHandler Property Tests[2m > [22mProperty 18: Error logging completeness - all error details are logged
+ [32m✓[39m tests/unit/errorHandler.property.test.ts[2m > [22mErrorHandler Property Tests[2m > [22mProperty: Error logging includes stack trace when available
+ [32m✓[39m tests/unit/errorHandler.property.test.ts[2m > [22mErrorHandler Property Tests[2m > [22mProperty: Info logging includes message and details
+ [32m✓[39m tests/unit/errorHandler.property.test.ts[2m > [22mErrorHandler Property Tests[2m > [22mProperty: Warning logging includes message and details
+ [32m✓[39m tests/unit/errorHandler.property.test.ts[2m > [22mErrorHandler Property Tests[2m > [22mProperty: Error tracking increments count for each error code
+ [32m✓[39m tests/unit/errorHandler.property.test.ts[2m > [22mErrorHandler Property Tests[2m > [22mProperty: Context details are preserved in logs
+[90mstdout[2m | tests/unit/cacheManager.property.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+🧹 Cleaning up test environment...
+
+ [32m✓[39m tests/unit/cacheManager.property.test.ts[2m > [22mCacheManager - Property Tests[2m > [22mshould store templates with timestamp within 1 second of current time[33m 551[2mms[22m[39m
+ [32m✓[39m tests/unit/cacheManager.property.test.ts[2m > [22mCacheManager - Property Tests[2m > [22mshould return cached data for fresh cache without API call
+ [32m✓[39m tests/unit/cacheManager.property.test.ts[2m > [22mCacheManager - Property Tests[2m > [22mshould invalidate cache when SHA differs
+ [32m✓[39m tests/unit/cacheManager.property.test.ts[2m > [22mCacheManager - Property Tests[2m > [22mshould handle cache expiration after TTL
+ [32m✓[39m tests/unit/cacheManager.property.test.ts[2m > [22mCacheManager - Property Tests[2m > [22mshould clear all cache entries
+[90mstdout[2m | tests/unit/urlValidator.property.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+🧹 Cleaning up test environment...
+
+ [32m✓[39m tests/unit/urlValidator.property.test.ts[2m > [22mURL Validator - Property Tests[2m > [22mshould accept and correctly parse valid GitHub repository URLs
+ [32m✓[39m tests/unit/urlValidator.property.test.ts[2m > [22mURL Validator - Property Tests[2m > [22mshould consistently parse repository configurations with path components
+ [32m✓[39m tests/unit/urlValidator.property.test.ts[2m > [22mURL Validator - Property Tests[2m > [22mshould maintain configuration validity through parsing
+ [32m✓[39m tests/unit/urlValidator.property.test.ts[2m > [22mURL Validator - Property Tests[2m > [22mshould reject invalid repository URL formats
+ [32m✓[39m tests/unit/urlValidator.property.test.ts[2m > [22mURL Validator - Property Tests[2m > [22mshould reject URLs with invalid owner or repo names
+[90mstdout[2m | tests/unit/configurationService.property.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+🧹 Cleaning up test environment...
+
+ [32m✓[39m tests/unit/configurationService.property.test.ts[2m > [22mConfigurationService - Property Tests[2m > [22mshould persist and retrieve repository configuration correctly
+ [32m✓[39m tests/unit/configurationService.property.test.ts[2m > [22mConfigurationService - Property Tests[2m > [22mshould store and retrieve authentication tokens correctly
+ [32m✓[39m tests/unit/configurationService.property.test.ts[2m > [22mConfigurationService - Property Tests[2m > [22mshould completely clear authentication tokens
+ [32m✓[39m tests/unit/configurationService.property.test.ts[2m > [22mConfigurationService - Property Tests[2m > [22mshould prioritize GitHub configuration over local configuration
+ [32m✓[39m tests/unit/configurationService.property.test.ts[2m > [22mConfigurationService - Property Tests[2m > [22mshould prioritize workspace configuration over user configuration
+[90mstdout[2m | tests/unit/frontMatterParser.property.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+🧹 Cleaning up test environment...
+
+ [32m✓[39m tests/unit/frontMatterParser.property.test.ts[2m > [22mFront Matter Parser - Property Tests[2m > [22mshould extract all key-value pairs from valid YAML front matter
+ [32m✓[39m tests/unit/frontMatterParser.property.test.ts[2m > [22mFront Matter Parser - Property Tests[2m > [22mshould handle markdown without front matter
+ [32m✓[39m tests/unit/frontMatterParser.property.test.ts[2m > [22mFront Matter Parser - Property Tests[2m > [22mshould extract title, description, and tags
+ [32m✓[39m tests/unit/frontMatterParser.property.test.ts[2m > [22mFront Matter Parser - Property Tests[2m > [22mshould handle various YAML value types
+ [32m✓[39m tests/unit/frontMatterParser.property.test.ts[2m > [22mFront Matter Parser - Property Tests[2m > [22mshould handle arrays in YAML
+ [32m✓[39m tests/unit/frontMatterParser.property.test.ts[2m > [22mFront Matter Parser - Property Tests[2m > [22mshould handle empty front matter
+ [32m✓[39m tests/unit/frontMatterParser.property.test.ts[2m > [22mFront Matter Parser - Property Tests[2m > [22mshould handle malformed YAML gracefully
+ [32m✓[39m tests/unit/frontMatterParser.property.test.ts[2m > [22mFront Matter Parser - Property Tests[2m > [22mshould preserve content after front matter
+ [32m✓[39m tests/unit/frontMatterParser.property.test.ts[2m > [22mFront Matter Parser - Property Tests[2m > [22mshould handle comments in YAML
+ [32m✓[39m tests/unit/frontMatterParser.property.test.ts[2m > [22mFront Matter Parser - Property Tests[2m > [22mshould extract display metadata with missing fields
+[90mstdout[2m | tests/unit/vscode-mocks.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+🧹 Cleaning up test environment...
+
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mvscode.window mocks[2m > [22mshould mock showInformationMessage
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mvscode.window mocks[2m > [22mshould mock showErrorMessage
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mvscode.window mocks[2m > [22mshould mock showOpenDialog
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mvscode.window mocks[2m > [22mshould mock registerTreeDataProvider
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mvscode.commands mocks[2m > [22mshould mock registerCommand
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mvscode.workspace mocks[2m > [22mshould mock getConfiguration
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mvscode.workspace mocks[2m > [22mshould handle workspaceFolders
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mEventEmitter mock[2m > [22mshould create functional EventEmitter
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mTreeItem mock[2m > [22mshould create TreeItem with proper properties
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mTreeItem mock[2m > [22mshould support property overrides
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mThemeIcon mock[2m > [22mshould create ThemeIcon with proper properties
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mFactory functions[2m > [22mshould create mock ExtensionContext
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mFactory functions[2m > [22mshould create mock WorkspaceFolder
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mFactory functions[2m > [22mshould create mock WorkspaceConfiguration
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mFactory functions[2m > [22mshould create template items with proper configuration
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mTest utilities[2m > [22mshould setup configuration correctly
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mTest utilities[2m > [22mshould simulate user interactions
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mTest utilities[2m > [22mshould provide message assertions
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mEnums and constants[2m > [22mshould provide TreeItemCollapsibleState enum
+ [32m✓[39m tests/unit/vscode-mocks.test.ts[2m > [22mVS Code API Mocks[2m > [22mEnums and constants[2m > [22mshould provide ConfigurationTarget enum
+[90mstdout[2m | tests/unit/githubRepositoryService.property.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+🧹 Cleaning up test environment...
+
+ [32m✓[39m tests/unit/githubRepositoryService.property.test.ts[2m > [22mGitHubRepositoryService - Property Tests[2m > [22mshould filter only markdown files from mixed file list[33m 662[2mms[22m[39m
+ [32m✓[39m tests/unit/githubRepositoryService.property.test.ts[2m > [22mGitHubRepositoryService - Property Tests[2m > [22mshould extract all required metadata fields from GitHub API response
+ [32m✓[39m tests/unit/githubRepositoryService.property.test.ts[2m > [22mGitHubRepositoryService - Property Tests[2m > [22mshould sort templates alphabetically by name
+ [32m✓[39m tests/unit/githubRepositoryService.property.test.ts[2m > [22mGitHubRepositoryService - Property Tests[2m > [22mshould handle empty file lists
+ [32m✓[39m tests/unit/githubRepositoryService.property.test.ts[2m > [22mGitHubRepositoryService - Property Tests[2m > [22mshould handle lists with no markdown files
+ [32m✓[39m tests/unit/displayUtils.property.test.ts[2m > [22mDisplay Utils - Property Tests[2m > [22mshould remove .md extension from any filename
+ [32m✓[39m tests/unit/displayUtils.property.test.ts[2m > [22mDisplay Utils - Property Tests[2m > [22mshould handle filenames without .md extension
+ [32m✓[39m tests/unit/displayUtils.property.test.ts[2m > [22mDisplay Utils - Property Tests[2m > [22mshould include filename and size in tooltip[33m 649[2mms[22m[39m
+ [32m✓[39m tests/unit/displayUtils.property.test.ts[2m > [22mDisplay Utils - Property Tests[2m > [22mshould format file size correctly
+ [32m✓[39m tests/unit/displayUtils.property.test.ts[2m > [22mDisplay Utils - Property Tests[2m > [22mshould handle zero bytes
+ [32m✓[39m tests/unit/displayUtils.property.test.ts[2m > [22mDisplay Utils - Property Tests[2m > [22mshould format display names correctly
+ [32m✓[39m tests/unit/displayUtils.property.test.ts[2m > [22mDisplay Utils - Property Tests[2m > [22mshould format GitHub configuration source with owner and repo
+ [32m✓[39m tests/unit/displayUtils.property.test.ts[2m > [22mDisplay Utils - Property Tests[2m > [22mshould format local configuration source
+ [32m✓[39m tests/unit/displayUtils.property.test.ts[2m > [22mDisplay Utils - Property Tests[2m > [22mshould handle none configuration source
+ [32m✓[39m tests/unit/displayUtils.property.test.ts[2m > [22mDisplay Utils - Property Tests[2m > [22mshould handle GitHub source without details
+ [32m✓[39m tests/unit/displayUtils.property.test.ts[2m > [22mDisplay Utils - Property Tests[2m > [22mshould handle local source without details
+[90mstdout[2m | tests/unit/displayUtils.property.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+🧹 Cleaning up test environment...
+
+[90mstdout[2m | tests/unit/fileSystemService.property.test.ts[22m[39m
+🧪 Initializing test environment for unit tests...
+
+ [32m✓[39m tests/unit/fileSystemService.property.test.ts[2m > [22mFileSystemService - Property Tests[2m > [22mshould ensure .kiro/steering directory exists after loading template
+ [32m✓[39m tests/unit/fileSystemService.property.test.ts[2m > [22mFileSystemService - Property Tests[2m > [22mshould ensure .kiro/steering directory exists after loading template
+ [32m✓[39m tests/unit/fileSystemService.property.test.ts[2m > [22mFileSystemService - Property Tests[2m > [22mshould preserve template content through save and load[33m 505[2mms[22m[39m
+ [32m✓[39m tests/unit/fileSystemService.property.test.ts[2m > [22mFileSystemService - Property Tests[2m > [22mshould not delete or modify existing files when changing configuration
+ [32m✓[39m tests/unit/fileSystemService.property.test.ts[2m > [22mFileSystemService - Property Tests[2m > [22mshould not delete or modify existing files when changing configuration
+ [32m✓[39m tests/unit/fileSystemService.property.test.ts[2m > [22mFileSystemService - Property Tests[2m > [22mshould handle file overwrite correctly
+ [32m✓[39m tests/unit/fileSystemService.property.test.ts[2m > [22mFileSystemService - Property Tests[2m > [22mshould list markdown files in directory
+[90mstdout[2m | tests/unit/fileSystemService.property.test.ts[22m[39m
+🧹 Cleaning up test environment...
+
+Terminate batch job (Y/N)? 
+^C

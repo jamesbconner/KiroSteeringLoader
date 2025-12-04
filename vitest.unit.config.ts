@@ -27,6 +27,17 @@ export default defineConfig({
     hookTimeout: 15000,
     teardownTimeout: 10000,
     
+    // Limit concurrent tests to reduce memory usage
+    maxConcurrency: 5,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: false,
+        maxForks: 3,
+        minForks: 1
+      }
+    },
+    
     // Failure handling configuration
     retry: process.env.CI ? 1 : 0,
     bail: process.env.CI ? 1 : 0,
