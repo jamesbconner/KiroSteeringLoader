@@ -96,6 +96,11 @@ export function filterByDirectory(
   templates: TemplateMetadata[],
   directoryPath: string
 ): TemplateMetadata[] {
+  // Handle root level filtering (empty directory path)
+  if (directoryPath === '') {
+    return templates.filter(template => !template.path.includes('/'));
+  }
+  
   const normalizedPath = directoryPath.endsWith('/') ? directoryPath : `${directoryPath}/`;
   
   return templates.filter(template => {

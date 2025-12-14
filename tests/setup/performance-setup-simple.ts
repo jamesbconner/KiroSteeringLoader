@@ -1,14 +1,105 @@
 /**
- * Performance Test Setup
- * Configures the test environment for performance testing
+ * Simplified Performance Test Setup
+ * Configures the test environment for performance testing without complex mocks
  */
 
-import { beforeAll, afterAll } from 'vitest';
+import { beforeAll, afterAll, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Import VS Code mocks setup for performance tests
-import '../mocks/setup';
+// Mock VS Code API directly for performance tests
+vi.mock('vscode', () => ({
+  workspace: {
+    workspaceFolders: undefined,
+    getConfiguration: vi.fn().mockReturnValue({
+      get: vi.fn().mockReturnValue(undefined),
+      update: vi.fn().mockResolvedValue(undefined),
+      has: vi.fn().mockReturnValue(false),
+      inspect: vi.fn().mockReturnValue(undefined)
+    })
+  },
+  window: {
+    showInformationMessage: vi.fn(),
+    showErrorMessage: vi.fn(),
+    showWarningMessage: vi.fn(),
+    showOpenDialog: vi.fn(),
+    registerTreeDataProvider: vi.fn(),
+    createOutputChannel: vi.fn().mockReturnValue({
+      appendLine: vi.fn(),
+      show: vi.fn(),
+      hide: vi.fn(),
+      dispose: vi.fn()
+    })
+  },
+  commands: {
+    registerCommand: vi.fn(),
+    executeCommand: vi.fn()
+  },
+  Uri: {
+    file: vi.fn().mockImplementation((path: string) => ({ fsPath: path, scheme: 'file' })),
+    parse: vi.fn().mockImplementation((uri: string) => ({ fsPath: uri, scheme: 'file' }))
+  },
+  TreeItem: class MockTreeItem {
+    constructor(public label: string, public collapsibleState?: any) {}
+  },
+  TreeItemCollapsibleState: {
+    None: 0,
+    Collapsed: 1,
+    Expanded: 2
+  },
+  ThemeIcon: class MockThemeIcon {
+    constructor(public id: string) {}
+  },
+  EventEmitter: class MockEventEmitter {
+    event = vi.fn();
+    fire = vi.fn();
+    dispose = vi.fn();
+  },
+  Disposable: class MockDisposable {
+    static from = vi.fn().mockReturnValue({ dispose: vi.fn() });
+    dispose = vi.fn();
+  },
+  MockDisposable: class MockDisposable {
+    static from = vi.fn().mockReturnValue({ dispose: vi.fn() });
+    dispose = vi.fn();
+  },
+  MockUri: class MockUri {
+    constructor(public fsPath: string) {
+      this.scheme = 'file';
+      this.authority = '';
+      this.path = fsPath.replace(/\\/g, '/');
+      this.query = '';
+      this.fragment = '';
+    }
+    scheme = 'file';
+    authority = '';
+    path = '';
+    query = '';
+    fragment = '';
+    static file = vi.fn().mockImplementation((path: string) => new MockUri(path));
+    static parse = vi.fn().mockImplementation((uri: string) => new MockUri(uri));
+    with = vi.fn().mockImplementation((change: any) => new MockUri(change.path || this.fsPath));
+    toString = vi.fn().mockImplementation(() => this.fsPath);
+    toJSON = vi.fn().mockImplementation(() => ({
+      scheme: this.scheme,
+      authority: this.authority,
+      path: this.path,
+      query: this.query,
+      fragment: this.fragment,
+      fsPath: this.fsPath
+    }));
+  },
+  ConfigurationTarget: {
+    Global: 1,
+    Workspace: 2,
+    WorkspaceFolder: 3
+  },
+  ExtensionMode: {
+    Production: 1,
+    Development: 2,
+    Test: 3
+  }
+}));
 
 // Global performance test configuration
 const PERFORMANCE_CONFIG = {
@@ -165,3 +256,37 @@ export const performanceUtils = {
 
 // Export configuration for use in tests
 export { PERFORMANCE_CONFIG };
+
+/**
+ * Helper function to create mock extension context
+ */
+export function createMockExtensionContext() {
+  return {
+    subscriptions: [],
+    workspaceState: {
+      get: vi.fn().mockReturnValue(undefined),
+      update: vi.fn().mockResolvedValue(undefined),
+      keys: vi.fn().mockReturnValue([])
+    },
+    globalState: {
+      get: vi.fn().mockReturnValue(undefined),
+      update: vi.fn().mockResolvedValue(undefined),
+      keys: vi.fn().mockReturnValue([])
+    },
+    extensionUri: { fsPath: '/mock/extension/path', scheme: 'file' },
+    extensionPath: '/mock/extension/path',
+    asAbsolutePath: vi.fn().mockImplementation((relativePath: string) => `/mock/extension/path/${relativePath}`),
+    storageUri: { fsPath: '/mock/storage/path', scheme: 'file' },
+    storagePath: '/mock/storage/path',
+    globalStorageUri: { fsPath: '/mock/global/storage/path', scheme: 'file' },
+    globalStoragePath: '/mock/global/storage/path',
+    logUri: { fsPath: '/mock/log/path', scheme: 'file' },
+    logPath: '/mock/log/path',
+    extensionMode: 3, // Test mode
+    secrets: {
+      get: vi.fn().mockResolvedValue(undefined),
+      store: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined)
+    }
+  };
+}

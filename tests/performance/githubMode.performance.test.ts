@@ -4,11 +4,58 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { CacheManager } from '../../src/services/CacheManager';
 import { GitHubRepositoryService } from '../../src/services/GitHubRepositoryService';
 import { ConfigurationService } from '../../src/services/ConfigurationService';
 import { TemplateMetadata } from '../../src/types';
 import { createMockExtensionContext } from '../mocks/vscodeFactories';
+
+// Mock the cache manager for performance tests with stateful behavior
+vi.mock('../../src/services/CacheManager', () => {
+  return {
+    CacheManager: vi.fn().mockImplementation(() => {
+      // Create a stateful cache store for this instance
+      const cacheStore = new Map<string, any[]>();
+      
+      return {
+        getCachedTemplates: vi.fn().mockImplementation((cacheKey: string) => {
+          // Check if cache was invalidated or is a miss pattern
+          if (cacheKey.includes('miss') || !cacheStore.has(cacheKey)) {
+            return null;
+          }
+          return cacheStore.get(cacheKey) || null;
+        }),
+        setCachedTemplates: vi.fn().mockImplementation((cacheKey: string, templates: any[], sha?: string) => {
+          // Store templates in the mock cache
+          cacheStore.set(cacheKey, templates);
+          return;
+        }),
+        invalidateCache: vi.fn().mockImplementation((cacheKey: string) => {
+          // Remove from cache store
+          cacheStore.delete(cacheKey);
+          return;
+        }),
+        clearAllCache: vi.fn().mockImplementation(() => {
+          // Clear all cache entries
+          cacheStore.clear();
+          return;
+        }),
+        isCacheFresh: vi.fn().mockImplementation((cacheKey: string) => {
+          return !cacheKey.includes('stale') && cacheStore.has(cacheKey);
+        }),
+        isCacheValid: vi.fn().mockImplementation((cacheKey: string, sha: string) => {
+          return !cacheKey.includes('invalid') && sha !== 'invalid-sha' && cacheStore.has(cacheKey);
+        }),
+        getCacheStats: vi.fn().mockReturnValue({
+          totalEntries: 12,
+          freshEntries: 10,
+          staleEntries: 2
+        })
+      };
+    })
+  };
+});
+
+import { CacheManager } from '../../src/services/CacheManager';
 
 /**
  * GitHub mode performance metrics

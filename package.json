@@ -2,7 +2,7 @@
   "name": "kiro-steering-loader",
   "displayName": "Kiro Steering Loader",
   "description": "Load steering agent templates into Kiro projects",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "publisher": "jamesbconner",
   "license": "MIT",
   "icon": "icon.png",

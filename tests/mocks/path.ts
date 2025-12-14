@@ -333,11 +333,14 @@ export const createPathMock = (): MockedPath => ({
   win32: createPlatformMocks('win32')
 });
 
-// Default export for easier importing
-export const mockPath = createPathMock();
+// Create the default mock instance
+const mockPath = createPathMock();
 
-// Export as default for compatibility
+// Export as default for vi.mock compatibility
 export default mockPath;
+
+// Also export as named export for direct imports
+export { mockPath };
 
 /**
  * Path mock utilities for test setup and management

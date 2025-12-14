@@ -1,0 +1,445 @@
+/**
+ * URL Validator Tests
+ * 
+ * Comprehensive tests for GitHub repository URL parsing and validation including:
+ * - Full GitHub URL parsing (https://github.com/owner/repo)
+ * - Short format parsing (owner/repo, owner/repo/path)
+ * - GitHub name validation (alphanumeric, hyphens, no leading hyphen)
+ * - Repository configuration validation
+ * - Error handling for invalid formats and names
+ * - Edge cases and special characters
+ */
+
+import { describe, it, expect } from 'vitest';
+import { parseRepositoryUrl, validateRepositoryConfig } from '../../../src/utils/urlValidator';
+import { GitHubSteeringError, ErrorCode } from '../../../src/errors';
+import type { RepositoryConfig } from '../../../src/types';
+
+describe('urlValidator', () => {
+  describe('parseRepositoryUrl', () => {
+    describe('full GitHub URL format', () => {
+      it('should parse standard HTTPS GitHub URL', () => {
+        const result = parseRepositoryUrl('https://github.com/microsoft/vscode');
+        
+        expect(result).toEqual({
+          owner: 'microsoft',
+          repo: 'vscode',
+          branch: 'main'
+        });
+      });
+
+      it('should parse HTTP GitHub URL', () => {
+        const result = parseRepositoryUrl('http://github.com/facebook/react');
+        
+        expect(result).toEqual({
+          owner: 'facebook',
+          repo: 'react',
+          branch: 'main'
+        });
+      });
+
+      it('should remove .git suffix from repository name', () => {
+        const result = parseRepositoryUrl('https://github.com/nodejs/node.git');
+        
+        expect(result).toEqual({
+          owner: 'nodejs',
+          repo: 'node',
+          branch: 'main'
+        });
+      });
+
+      it('should handle URLs with additional path segments', () => {
+        const result = parseRepositoryUrl('https://github.com/microsoft/vscode/tree/main/src');
+        
+        expect(result).toEqual({
+          owner: 'microsoft',
+          repo: 'vscode',
+          branch: 'main'
+        });
+      });
+
+      it('should handle repository names with hyphens', () => {
+        const result = parseRepositoryUrl('https://github.com/microsoft/vscode-extension-samples');
+        
+        expect(result).toEqual({
+          owner: 'microsoft',
+          repo: 'vscode-extension-samples',
+          branch: 'main'
+        });
+      });
+
+      it('should handle owner names with hyphens', () => {
+        const result = parseRepositoryUrl('https://github.com/microsoft-samples/vscode-extension');
+        
+        expect(result).toEqual({
+          owner: 'microsoft-samples',
+          repo: 'vscode-extension',
+          branch: 'main'
+        });
+      });
+    });
+
+    describe('short format parsing', () => {
+      it('should parse owner/repo format', () => {
+        const result = parseRepositoryUrl('microsoft/vscode');
+        
+        expect(result).toEqual({
+          owner: 'microsoft',
+          repo: 'vscode',
+          branch: 'main'
+        });
+      });
+
+      it('should parse owner/repo/path format', () => {
+        const result = parseRepositoryUrl('microsoft/vscode/src/extensions');
+        
+        expect(result).toEqual({
+          owner: 'microsoft',
+          repo: 'vscode',
+          path: 'src/extensions',
+          branch: 'main'
+        });
+      });
+
+      it('should parse owner/repo/deep/nested/path format', () => {
+        const result = parseRepositoryUrl('facebook/react/packages/react-dom/src');
+        
+        expect(result).toEqual({
+          owner: 'facebook',
+          repo: 'react',
+          path: 'packages/react-dom/src',
+          branch: 'main'
+        });
+      });
+
+      it('should handle trailing slashes in path', () => {
+        const result = parseRepositoryUrl('microsoft/vscode/src/');
+        
+        expect(result).toEqual({
+          owner: 'microsoft',
+          repo: 'vscode',
+          path: 'src',
+          branch: 'main'
+        });
+      });
+
+      it('should handle multiple trailing slashes', () => {
+        const result = parseRepositoryUrl('microsoft/vscode/src///');
+        
+        expect(result).toEqual({
+          owner: 'microsoft',
+          repo: 'vscode',
+          path: 'src',
+          branch: 'main'
+        });
+      });
+
+      it('should handle empty path segments', () => {
+        const result = parseRepositoryUrl('microsoft/vscode//src//extensions/');
+        
+        expect(result).toEqual({
+          owner: 'microsoft',
+          repo: 'vscode',
+          path: 'src/extensions',
+          branch: 'main'
+        });
+      });
+    });
+
+    describe('whitespace handling', () => {
+      it('should trim leading and trailing whitespace', () => {
+        const result = parseRepositoryUrl('  microsoft/vscode  ');
+        
+        expect(result).toEqual({
+          owner: 'microsoft',
+          repo: 'vscode',
+          branch: 'main'
+        });
+      });
+
+      it('should handle tabs and newlines', () => {
+        const result = parseRepositoryUrl('\t\nmicrosoft/vscode\n\t');
+        
+        expect(result).toEqual({
+          owner: 'microsoft',
+          repo: 'vscode',
+          branch: 'main'
+        });
+      });
+    });
+
+    describe('error handling', () => {
+      it('should throw error for empty URL', () => {
+        expect(() => parseRepositoryUrl('')).toThrow(GitHubSteeringError);
+        
+        try {
+          parseRepositoryUrl('');
+        } catch (error) {
+          expect(error).toBeInstanceOf(GitHubSteeringError);
+          expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
+          expect((error as GitHubSteeringError).userMessage).toContain('Repository URL cannot be empty');
+        }
+      });
+
+      it('should throw error for whitespace-only URL', () => {
+        expect(() => parseRepositoryUrl('   ')).toThrow(GitHubSteeringError);
+        
+        try {
+          parseRepositoryUrl('   ');
+        } catch (error) {
+          expect(error).toBeInstanceOf(GitHubSteeringError);
+          expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
+          expect((error as GitHubSteeringError).userMessage).toContain('Repository URL cannot be empty');
+        }
+      });
+
+      it('should throw error for single part URL', () => {
+        expect(() => parseRepositoryUrl('microsoft')).toThrow(GitHubSteeringError);
+        
+        try {
+          parseRepositoryUrl('microsoft');
+        } catch (error) {
+          expect(error).toBeInstanceOf(GitHubSteeringError);
+          expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
+          expect((error as GitHubSteeringError).userMessage).toContain('Repository URL must be in format');
+        }
+      });
+
+      it('should throw error for invalid owner name starting with hyphen', () => {
+        expect(() => parseRepositoryUrl('-microsoft/vscode')).toThrow(GitHubSteeringError);
+        
+        try {
+          parseRepositoryUrl('-microsoft/vscode');
+        } catch (error) {
+          expect(error).toBeInstanceOf(GitHubSteeringError);
+          expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
+          expect((error as GitHubSteeringError).userMessage).toContain('Owner name contains invalid characters');
+        }
+      });
+
+      it('should throw error for invalid repo name starting with hyphen', () => {
+        expect(() => parseRepositoryUrl('microsoft/-vscode')).toThrow(GitHubSteeringError);
+        
+        try {
+          parseRepositoryUrl('microsoft/-vscode');
+        } catch (error) {
+          expect(error).toBeInstanceOf(GitHubSteeringError);
+          expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
+          expect((error as GitHubSteeringError).userMessage).toContain('Repository name contains invalid characters');
+        }
+      });
+
+      it('should throw error for owner name with special characters', () => {
+        expect(() => parseRepositoryUrl('micro$oft/vscode')).toThrow(GitHubSteeringError);
+        
+        try {
+          parseRepositoryUrl('micro$oft/vscode');
+        } catch (error) {
+          expect(error).toBeInstanceOf(GitHubSteeringError);
+          expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
+          expect((error as GitHubSteeringError).userMessage).toContain('Owner name contains invalid characters');
+        }
+      });
+
+      it('should throw error for repo name with special characters', () => {
+        expect(() => parseRepositoryUrl('microsoft/vs@code')).toThrow(GitHubSteeringError);
+        
+        try {
+          parseRepositoryUrl('microsoft/vs@code');
+        } catch (error) {
+          expect(error).toBeInstanceOf(GitHubSteeringError);
+          expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
+          expect((error as GitHubSteeringError).userMessage).toContain('Repository name contains invalid characters');
+        }
+      });
+
+      it('should throw error for empty owner name', () => {
+        expect(() => parseRepositoryUrl('/vscode')).toThrow(GitHubSteeringError);
+        
+        try {
+          parseRepositoryUrl('/vscode');
+        } catch (error) {
+          expect(error).toBeInstanceOf(GitHubSteeringError);
+          expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
+          expect((error as GitHubSteeringError).userMessage).toContain('Owner name contains invalid characters');
+        }
+      });
+
+      it('should throw error for empty repo name', () => {
+        expect(() => parseRepositoryUrl('microsoft/')).toThrow(GitHubSteeringError);
+        
+        try {
+          parseRepositoryUrl('microsoft/');
+        } catch (error) {
+          expect(error).toBeInstanceOf(GitHubSteeringError);
+          expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
+          expect((error as GitHubSteeringError).userMessage).toContain('Repository name contains invalid characters');
+        }
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should handle numeric owner and repo names', () => {
+        const result = parseRepositoryUrl('123/456');
+        
+        expect(result).toEqual({
+          owner: '123',
+          repo: '456',
+          branch: 'main'
+        });
+      });
+
+      it('should handle mixed alphanumeric names', () => {
+        const result = parseRepositoryUrl('user123/repo456');
+        
+        expect(result).toEqual({
+          owner: 'user123',
+          repo: 'repo456',
+          branch: 'main'
+        });
+      });
+
+      it('should handle names ending with hyphens', () => {
+        const result = parseRepositoryUrl('microsoft-/vscode-');
+        
+        expect(result).toEqual({
+          owner: 'microsoft-',
+          repo: 'vscode-',
+          branch: 'main'
+        });
+      });
+
+      it('should handle single character names', () => {
+        const result = parseRepositoryUrl('a/b');
+        
+        expect(result).toEqual({
+          owner: 'a',
+          repo: 'b',
+          branch: 'main'
+        });
+      });
+
+      it('should handle very long names', () => {
+        const longName = 'a'.repeat(100);
+        const result = parseRepositoryUrl(`${longName}/${longName}`);
+        
+        expect(result).toEqual({
+          owner: longName,
+          repo: longName,
+          branch: 'main'
+        });
+      });
+    });
+  });
+
+  describe('validateRepositoryConfig', () => {
+    it('should validate valid repository config', () => {
+      const config: RepositoryConfig = {
+        owner: 'microsoft',
+        repo: 'vscode',
+        branch: 'main'
+      };
+      
+      expect(validateRepositoryConfig(config)).toBe(true);
+    });
+
+    it('should validate config with path', () => {
+      const config: RepositoryConfig = {
+        owner: 'microsoft',
+        repo: 'vscode',
+        path: 'src/extensions',
+        branch: 'main'
+      };
+      
+      expect(validateRepositoryConfig(config)).toBe(true);
+    });
+
+    it('should validate config with hyphens in names', () => {
+      const config: RepositoryConfig = {
+        owner: 'microsoft-samples',
+        repo: 'vscode-extension-samples',
+        branch: 'main'
+      };
+      
+      expect(validateRepositoryConfig(config)).toBe(true);
+    });
+
+    it('should reject config with missing owner', () => {
+      const config = {
+        repo: 'vscode',
+        branch: 'main'
+      } as RepositoryConfig;
+      
+      expect(validateRepositoryConfig(config)).toBe(false);
+    });
+
+    it('should reject config with missing repo', () => {
+      const config = {
+        owner: 'microsoft',
+        branch: 'main'
+      } as RepositoryConfig;
+      
+      expect(validateRepositoryConfig(config)).toBe(false);
+    });
+
+    it('should reject config with empty owner', () => {
+      const config: RepositoryConfig = {
+        owner: '',
+        repo: 'vscode',
+        branch: 'main'
+      };
+      
+      expect(validateRepositoryConfig(config)).toBe(false);
+    });
+
+    it('should reject config with empty repo', () => {
+      const config: RepositoryConfig = {
+        owner: 'microsoft',
+        repo: '',
+        branch: 'main'
+      };
+      
+      expect(validateRepositoryConfig(config)).toBe(false);
+    });
+
+    it('should reject config with invalid owner name', () => {
+      const config: RepositoryConfig = {
+        owner: '-microsoft',
+        repo: 'vscode',
+        branch: 'main'
+      };
+      
+      expect(validateRepositoryConfig(config)).toBe(false);
+    });
+
+    it('should reject config with invalid repo name', () => {
+      const config: RepositoryConfig = {
+        owner: 'microsoft',
+        repo: 'vs@code',
+        branch: 'main'
+      };
+      
+      expect(validateRepositoryConfig(config)).toBe(false);
+    });
+
+    it('should reject config with special characters in owner', () => {
+      const config: RepositoryConfig = {
+        owner: 'micro$oft',
+        repo: 'vscode',
+        branch: 'main'
+      };
+      
+      expect(validateRepositoryConfig(config)).toBe(false);
+    });
+
+    it('should reject config with special characters in repo', () => {
+      const config: RepositoryConfig = {
+        owner: 'microsoft',
+        repo: 'vs.code',
+        branch: 'main'
+      };
+      
+      expect(validateRepositoryConfig(config)).toBe(false);
+    });
+  });
+});

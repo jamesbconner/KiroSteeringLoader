@@ -5,8 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import '../mocks/setup'; // Import mock setup first
-import { MockEventEmitter, TreeItemCollapsibleState } from '../mocks/vscode';
-import { fileSystemMockUtils } from '../mocks/fs';
+import { vscode, fsMock, pathMock, MockEventEmitter, TreeItemCollapsibleState, fileSystemMockUtils } from '../mocks/setup';
 import { testHelpers } from '../utils/testHelpers';
 import { SteeringTemplateProvider } from '../../src/steeringTemplateProvider';
 
@@ -22,19 +21,11 @@ function createMockWorkspaceFolder(name: string, fsPath: string) {
 describe('SteeringTemplateProvider', () => {
   let provider: SteeringTemplateProvider;
   let mockContext: any;
-  let mockVSCode: any;
-  let mockFs: any;
-  let mockPath: any;
 
   beforeEach(async () => {
     // Reset all mocks
     vi.clearAllMocks();
     fileSystemMockUtils.reset();
-    
-    // Get the mocked modules
-    mockVSCode = await vi.importMock('vscode');
-    mockFs = await vi.importMock('fs');
-    mockPath = await vi.importMock('path');
     
     // Create mock extension context
     mockContext = {
@@ -257,7 +248,7 @@ describe('SteeringTemplateProvider', () => {
     it('should call getTemplateItems when no element is provided', async () => {
       // Arrange
       const mockConfig = { get: vi.fn().mockReturnValue(undefined) };
-      mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
+      vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
 
       // Spy on private method
       const getTemplateItemsSpy = vi.spyOn(provider as any, 'getTemplateItems');
@@ -291,7 +282,7 @@ describe('SteeringTemplateProvider', () => {
     it('should handle undefined element parameter', async () => {
       // Arrange
       const mockConfig = { get: vi.fn().mockReturnValue(undefined) };
-      mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
+      vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
 
       // Spy on private method
       const getTemplateItemsSpy = vi.spyOn(provider as any, 'getTemplateItems');
@@ -308,181 +299,191 @@ describe('SteeringTemplateProvider', () => {
 
   describe('getTemplateItems private method', () => {
     describe('when no templates path is configured', () => {
-      it('should return setup item when templatesPath is undefined', () => {
+      it('should return setup item when templatesPath is undefined', async () => {
         // Arrange
         const mockConfig = { get: vi.fn().mockReturnValue(undefined) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(1);
-        expect(result[0].label).toBe('Click to set templates path');
-        expect(result[0].itemType).toBe('setup');
+        expect(result).toHaveLength(2);
+        expect(result[0].itemType).toBe('info'); // Source indicator
+        expect(result[1].label).toBe('Click to configure GitHub repository');
+        expect(result[1].itemType).toBe('setup');
       });
 
-      it('should return setup item when templatesPath is empty string', () => {
+      it('should return setup item when templatesPath is empty string', async () => {
         // Arrange
         const mockConfig = { get: vi.fn().mockReturnValue('') };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(1);
-        expect(result[0].label).toBe('Click to set templates path');
-        expect(result[0].itemType).toBe('setup');
+        expect(result).toHaveLength(2);
+        expect(result[0].itemType).toBe('info'); // Source indicator
+        expect(result[1].label).toBe('Click to configure GitHub repository');
+        expect(result[1].itemType).toBe('setup');
       });
 
-      it('should return setup item when templatesPath is null', () => {
+      it('should return setup item when templatesPath is null', async () => {
         // Arrange
         const mockConfig = { get: vi.fn().mockReturnValue(null) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(1);
-        expect(result[0].label).toBe('Click to set templates path');
-        expect(result[0].itemType).toBe('setup');
+        expect(result).toHaveLength(2);
+        expect(result[0].itemType).toBe('info'); // Source indicator
+        expect(result[1].label).toBe('Click to configure GitHub repository');
+        expect(result[1].itemType).toBe('setup');
       });
     });
 
     describe('when templates path does not exist', () => {
-      it('should return error and setup items when path does not exist', () => {
+      it('should return error and setup items when path does not exist', async () => {
         // Arrange
         const mockConfig = { get: vi.fn().mockReturnValue('/nonexistent/path') };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(false);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(false);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(2);
-        expect(result[0].label).toBe('Templates path not found');
-        expect(result[0].itemType).toBe('error');
-        expect(result[1].label).toBe('Click to set new path');
-        expect(result[1].itemType).toBe('setup');
+        expect(result).toHaveLength(3);
+        expect(result[0].itemType).toBe('info'); // Source indicator
+        expect(result[1].label).toBe('Templates path not found');
+        expect(result[1].itemType).toBe('error');
+        expect(result[2].label).toBe('Click to set new path');
+        expect(result[2].itemType).toBe('setup');
       });
 
-      it('should handle different non-existent paths', () => {
+      it('should handle different non-existent paths', async () => {
         // Arrange
         const paths = ['/does/not/exist', 'C:\\invalid\\path', '/tmp/missing'];
         
-        paths.forEach(path => {
+        for (const path of paths) {
           vi.clearAllMocks();
           const mockConfig = { get: vi.fn().mockReturnValue(path) };
-          mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-          mockFs.existsSync.mockReturnValue(false);
+          vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+          fsMock.existsSync.mockReturnValue(false);
 
           // Act
-          const result = (provider as any).getTemplateItems();
+          const result = await (provider as any).getTemplateItems();
 
           // Assert
-          expect(result).toHaveLength(2);
-          expect(result[0].itemType).toBe('error');
-          expect(result[1].itemType).toBe('setup');
-        });
+          expect(result).toHaveLength(3);
+          expect(result[0].itemType).toBe('info'); // Source indicator
+          expect(result[1].itemType).toBe('error');
+          expect(result[2].itemType).toBe('setup');
+        }
       });
     });
 
     describe('when templates directory exists but is empty', () => {
-      it('should return info items when no .md files found', () => {
+      it('should return info items when no .md files found', async () => {
         // Arrange
         const templatesPath = '/test/empty';
         const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readdirSync.mockReturnValue([]);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readdirSync.mockReturnValue([]);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(2);
-        expect(result[0].label).toBe('No .md template files found');
-        expect(result[0].itemType).toBe('info');
-        expect(result[1].label).toBe('Path: /test/empty');
+        expect(result).toHaveLength(3);
+        expect(result[0].itemType).toBe('info'); // Source indicator
+        expect(result[1].label).toBe('No .md template files found');
         expect(result[1].itemType).toBe('info');
+        expect(result[2].label).toBe('Path: /test/empty');
+        expect(result[2].itemType).toBe('info');
       });
 
-      it('should return info items when directory has non-markdown files', () => {
+      it('should return info items when directory has non-markdown files', async () => {
         // Arrange
         const templatesPath = '/test/non-markdown';
         const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readdirSync.mockReturnValue(['readme.txt', 'config.json', 'script.js']);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readdirSync.mockReturnValue(['readme.txt', 'config.json', 'script.js']);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(2);
-        expect(result[0].label).toBe('No .md template files found');
-        expect(result[0].itemType).toBe('info');
-        expect(result[1].label).toBe(`Path: ${templatesPath}`);
+        expect(result).toHaveLength(3);
+        expect(result[0].itemType).toBe('info'); // Source indicator
+        expect(result[1].label).toBe('No .md template files found');
         expect(result[1].itemType).toBe('info');
+        expect(result[2].label).toBe(`Path: ${templatesPath}`);
+        expect(result[2].itemType).toBe('info');
       });
     });
 
     describe('when templates directory has valid templates', () => {
-      it('should return template items for .md files', () => {
+      it('should return template items for .md files', async () => {
         // Arrange
         const templatesPath = '/test/templates';
         const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readdirSync.mockReturnValue(['template1.md', 'template2.md']);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readdirSync.mockReturnValue(['template1.md', 'template2.md']);
 
         // Act
-        const result = (provider as any).getTemplateItems();
-
-        // Assert
-        expect(result).toHaveLength(2);
-        expect(result[0].label).toBe('template1');
-        expect(result[0].itemType).toBe('template');
-        expect(result[0].templatePath).toBe('/test/templates/template1.md');
-        expect(result[1].label).toBe('template2');
-        expect(result[1].itemType).toBe('template');
-        expect(result[1].templatePath).toBe('/test/templates/template2.md');
-      });
-
-      it('should filter out non-markdown files', () => {
-        // Arrange
-        const templatesPath = '/test/mixed';
-        const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readdirSync.mockReturnValue(['template1.md', 'template2.md', 'readme.txt', 'config.json', 'template3.md']);
-
-        // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
         expect(result).toHaveLength(3);
-        expect(result.every(item => item.itemType === 'template')).toBe(true);
-        expect(result.map(item => item.label)).toEqual(['template1', 'template2', 'template3']);
+        expect(result[0].itemType).toBe('info'); // Source indicator
+        expect(result[1].label).toBe('template1');
+        expect(result[1].itemType).toBe('template');
+        expect(result[1].templatePath).toBe('/test/templates/template1.md');
+        expect(result[2].label).toBe('template2');
+        expect(result[2].itemType).toBe('template');
+        expect(result[2].templatePath).toBe('/test/templates/template2.md');
       });
 
-      it('should handle templates with different naming patterns', () => {
+      it('should filter out non-markdown files', async () => {
+        // Arrange
+        const templatesPath = '/test/mixed';
+        const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readdirSync.mockReturnValue(['template1.md', 'template2.md', 'readme.txt', 'config.json', 'template3.md']);
+
+        // Act
+        const result = await (provider as any).getTemplateItems();
+
+        // Assert
+        expect(result).toHaveLength(4);
+        expect(result[0].itemType).toBe('info'); // Source indicator
+        expect(result.slice(1).every(item => item.itemType === 'template')).toBe(true);
+        expect(result.slice(1).map(item => item.label)).toEqual(['template1', 'template2', 'template3']);
+      });
+
+      it('should handle templates with different naming patterns', async () => {
         // Arrange
         const templatesPath = '/test/naming';
         const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readdirSync.mockReturnValue(['simple.md', 'with-dashes.md', 'with_underscores.md', 'CamelCase.md', '123-numeric.md']);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readdirSync.mockReturnValue(['simple.md', 'with-dashes.md', 'with_underscores.md', 'CamelCase.md', '123-numeric.md']);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(5);
-        expect(result.map(item => item.label)).toEqual([
+        expect(result).toHaveLength(6);
+        expect(result[0].itemType).toBe('info'); // Source indicator
+        expect(result.slice(1).map(item => item.label)).toEqual([
           'simple',
           'with-dashes',
           'with_underscores',
@@ -491,47 +492,47 @@ describe('SteeringTemplateProvider', () => {
         ]);
       });
 
-      it('should create correct template paths', () => {
+      it('should create correct template paths', async () => {
         // Arrange
         const templatesPath = '/custom/templates/path';
         const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readdirSync.mockReturnValue(['template1.md', 'template2.md']);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readdirSync.mockReturnValue(['template1.md', 'template2.md']);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(2);
-        expect(result[0].templatePath).toBe(`${templatesPath}/template1.md`);
-        expect(result[1].templatePath).toBe(`${templatesPath}/template2.md`);
+        expect(result).toHaveLength(3); // Source indicator + 2 templates
+        expect(result[1].templatePath).toBe(`${templatesPath}/template1.md`);
+        expect(result[2].templatePath).toBe(`${templatesPath}/template2.md`);
       });
     });
 
     describe('error handling', () => {
-      it('should return error items when readdir throws exception', () => {
+      it('should return error items when readdir throws exception', async () => {
         // Arrange
         const templatesPath = '/test/error';
         const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readdirSync.mockImplementation(() => {
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readdirSync.mockImplementation(() => {
           throw new Error('Permission denied');
         });
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(2);
-        expect(result[0].label).toBe('Error reading templates directory');
-        expect(result[0].itemType).toBe('error');
-        expect(result[1].label).toBe('Click to set new path');
-        expect(result[1].itemType).toBe('setup');
+        expect(result).toHaveLength(3); // Source indicator + error + setup
+        expect(result[1].label).toBe('Error reading templates directory');
+        expect(result[1].itemType).toBe('error');
+        expect(result[2].label).toBe('Click to set new path');
+        expect(result[2].itemType).toBe('setup');
       });
 
-      it('should handle different types of file system errors', () => {
+      it('should handle different types of file system errors', async () => {
         // Arrange
         const templatesPath = '/test/error';
         const errors = [
@@ -541,121 +542,121 @@ describe('SteeringTemplateProvider', () => {
           new Error('Unknown error')
         ];
 
-        errors.forEach(error => {
+        for (const error of errors) {
           vi.clearAllMocks();
           const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-          mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-          mockFs.existsSync.mockReturnValue(true);
-          mockFs.readdirSync.mockImplementation(() => {
+          vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+          fsMock.existsSync.mockReturnValue(true);
+          fsMock.readdirSync.mockImplementation(() => {
             throw error;
           });
 
           // Act
-          const result = (provider as any).getTemplateItems();
+          const result = await (provider as any).getTemplateItems();
 
           // Assert
-          expect(result).toHaveLength(2);
-          expect(result[0].itemType).toBe('error');
-          expect(result[1].itemType).toBe('setup');
-        });
+          expect(result).toHaveLength(3); // Source indicator + error + setup
+          expect(result[1].itemType).toBe('error');
+          expect(result[2].itemType).toBe('setup');
+        }
       });
 
-      it('should handle null or undefined from readdirSync', () => {
+      it('should handle null or undefined from readdirSync', async () => {
         // Arrange
         const templatesPath = '/test/null';
         const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readdirSync.mockReturnValue(null as any);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readdirSync.mockReturnValue(null as any);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(2);
-        expect(result[0].itemType).toBe('error');
-        expect(result[1].itemType).toBe('setup');
+        expect(result).toHaveLength(3); // Source indicator + error + setup
+        expect(result[1].itemType).toBe('error');
+        expect(result[2].itemType).toBe('setup');
       });
     });
 
     describe('configuration integration', () => {
-      it('should read configuration from correct section', () => {
+      it('should read configuration from correct section', async () => {
         // Arrange
         const mockConfig = { get: vi.fn().mockReturnValue('/test/path') };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(false);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(false);
 
         // Act
-        (provider as any).getTemplateItems();
+        await (provider as any).getTemplateItems();
 
         // Assert
-        expect(mockVSCode.workspace.getConfiguration).toHaveBeenCalledWith('kiroSteeringLoader');
+        expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith('kiroSteeringLoader');
         expect(mockConfig.get).toHaveBeenCalledWith('templatesPath');
       });
 
-      it('should handle configuration get method returning different types', () => {
+      it('should handle configuration get method returning different types', async () => {
         // Arrange
         const testValues = [undefined, null, '', 'valid/path', 123, {}, []];
         
-        testValues.forEach(value => {
+        for (const value of testValues) {
           vi.clearAllMocks();
           const mockConfig = { get: vi.fn().mockReturnValue(value) };
-          mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-          mockFs.existsSync.mockReturnValue(false);
+          vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+          fsMock.existsSync.mockReturnValue(false);
 
           // Act & Assert - should not throw
-          expect(() => (provider as any).getTemplateItems()).not.toThrow();
-        });
+          await expect((provider as any).getTemplateItems()).resolves.toBeDefined();
+        }
       });
     });
 
     describe('path handling', () => {
-      it('should handle Windows-style paths', () => {
+      it('should handle Windows-style paths', async () => {
         // Arrange
         const templatesPath = 'C:\\Users\\Test\\Templates';
         const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readdirSync.mockReturnValue(['template.md']);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readdirSync.mockReturnValue(['template.md']);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(1);
-        expect(result[0].itemType).toBe('template');
+        expect(result).toHaveLength(2); // Source indicator + template
+        expect(result[1].itemType).toBe('template');
       });
 
-      it('should handle Unix-style paths', () => {
+      it('should handle Unix-style paths', async () => {
         // Arrange
         const templatesPath = '/home/user/templates';
         const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readdirSync.mockReturnValue(['template.md']);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readdirSync.mockReturnValue(['template.md']);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(1);
-        expect(result[0].itemType).toBe('template');
+        expect(result).toHaveLength(2); // Source indicator + template
+        expect(result[1].itemType).toBe('template');
       });
 
-      it('should handle relative paths', () => {
+      it('should handle relative paths', async () => {
         // Arrange
         const templatesPath = './templates';
         const mockConfig = { get: vi.fn().mockReturnValue(templatesPath) };
-        mockVSCode.workspace.getConfiguration.mockReturnValue(mockConfig);
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readdirSync.mockReturnValue(['template.md']);
+        vscode.workspace.getConfiguration.mockReturnValue(mockConfig);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readdirSync.mockReturnValue(['template.md']);
 
         // Act
-        const result = (provider as any).getTemplateItems();
+        const result = await (provider as any).getTemplateItems();
 
         // Assert
-        expect(result).toHaveLength(1);
-        expect(result[0].itemType).toBe('template');
+        expect(result).toHaveLength(2); // Source indicator + template
+        expect(result[1].itemType).toBe('template');
       });
     });
   });
@@ -680,22 +681,22 @@ describe('SteeringTemplateProvider', () => {
 
         // Set up workspace
         const workspaceFolder = createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations
-        mockFs.existsSync.mockReturnValue(false); // Directory doesn't exist initially
-        mockFs.readFileSync.mockReturnValue(templateContent);
-        mockFs.mkdirSync.mockReturnValue(undefined);
-        mockFs.writeFileSync.mockReturnValue(undefined);
+        fsMock.existsSync.mockReturnValue(false); // Directory doesn't exist initially
+        fsMock.readFileSync.mockReturnValue(templateContent);
+        fsMock.mkdirSync.mockReturnValue(undefined);
+        fsMock.writeFileSync.mockReturnValue(undefined);
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockFs.mkdirSync).toHaveBeenCalledWith(steeringDir, { recursive: true });
-        expect(mockFs.readFileSync).toHaveBeenCalledWith(templatePath, 'utf8');
-        expect(mockFs.writeFileSync).toHaveBeenCalledWith(targetPath, templateContent);
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledWith('Template "template1.md" loaded successfully');
+        expect(fsMock.mkdirSync).toHaveBeenCalledWith(steeringDir, { recursive: true });
+        expect(fsMock.readFileSync).toHaveBeenCalledWith(templatePath, 'utf8');
+        expect(fsMock.writeFileSync).toHaveBeenCalledWith(targetPath, templateContent);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith('Template "template1.md" loaded successfully');
       });
 
       it('should create .kiro/steering directory when it does not exist', async () => {
@@ -712,10 +713,10 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock existsSync to return false for steering directory
-        mockFs.existsSync.mockImplementation((path: string) => {
+        fsMock.existsSync.mockImplementation((path: string) => {
           const normalized = path.replace(/\\/g, '/');
           return !normalized.includes('.kiro/steering');
         });
@@ -724,7 +725,7 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockFs.mkdirSync).toHaveBeenCalledWith('/test/workspace/.kiro/steering', { recursive: true });
+        expect(fsMock.mkdirSync).toHaveBeenCalledWith('/test/workspace/.kiro/steering', { recursive: true });
       });
 
       it('should not create directory when .kiro/steering already exists', async () => {
@@ -741,18 +742,30 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
-        // Mock existsSync to return true for steering directory
-        mockFs.existsSync.mockImplementation((path: string) => {
-          return fileSystemMockUtils.exists(path);
+        // Mock file system operations
+        fsMock.readFileSync.mockReturnValue(templateContent);
+        
+        // Mock FileSystemService.loadTemplate to return success
+        const mockFileSystemService = (provider as any).fileSystemService;
+        vi.spyOn(mockFileSystemService, 'loadTemplate').mockResolvedValue({
+          success: true,
+          filepath: '/test/workspace/.kiro/steering/template.md'
         });
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockFs.mkdirSync).not.toHaveBeenCalled();
+        expect(mockFileSystemService.loadTemplate).toHaveBeenCalledWith(
+          templateContent,
+          'template.md',
+          workspacePath
+        );
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+          'Template "template.md" loaded successfully'
+        );
       });
 
       it('should handle templates with different file extensions', async () => {
@@ -769,25 +782,25 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations with specific content
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation((path: string) => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation((path: string) => {
           if (path === templatePath) return templateContent;
           return '';
         });
-        mockFs.writeFileSync.mockReturnValue(undefined);
+        fsMock.writeFileSync.mockReturnValue(undefined);
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+        expect(fsMock.writeFileSync).toHaveBeenCalledWith(
           '/test/workspace/.kiro/steering/complex-template.md',
           templateContent
         );
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledWith(
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
           'Template "complex-template.md" loaded successfully'
         );
       });
@@ -806,25 +819,25 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations with specific content
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation((path: string) => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation((path: string) => {
           if (path === templatePath) return templateContent;
           return '';
         });
-        mockFs.writeFileSync.mockReturnValue(undefined);
+        fsMock.writeFileSync.mockReturnValue(undefined);
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+        expect(fsMock.writeFileSync).toHaveBeenCalledWith(
           '/test/workspace/.kiro/steering/unicode-template.md',
           templateContent
         );
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledWith(
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
           'Template "unicode-template.md" loaded successfully'
         );
       });
@@ -843,25 +856,25 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations with specific content
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation((path: string) => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation((path: string) => {
           if (path === templatePath) return templateContent;
           return '';
         });
-        mockFs.writeFileSync.mockReturnValue(undefined);
+        fsMock.writeFileSync.mockReturnValue(undefined);
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+        expect(fsMock.writeFileSync).toHaveBeenCalledWith(
           '/test/workspace/.kiro/steering/empty-template.md',
           ''
         );
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledWith(
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
           'Template "empty-template.md" loaded successfully'
         );
       });
@@ -882,22 +895,22 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations with specific content
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation((path: string) => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation((path: string) => {
           if (path === templatePath) return newTemplateContent;
           return '';
         });
-        mockFs.writeFileSync.mockReturnValue(undefined);
+        fsMock.writeFileSync.mockReturnValue(undefined);
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockFs.writeFileSync).toHaveBeenCalledWith(targetPath, newTemplateContent);
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledWith(
+        expect(fsMock.writeFileSync).toHaveBeenCalledWith(targetPath, newTemplateContent);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
           'Template "existing-template.md" loaded successfully'
         );
       });
@@ -909,9 +922,9 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate('');
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
-        expect(mockFs.readFileSync).not.toHaveBeenCalled();
-        expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
+        expect(fsMock.readFileSync).not.toHaveBeenCalled();
+        expect(fsMock.writeFileSync).not.toHaveBeenCalled();
       });
 
       it('should show error message when template path is undefined', async () => {
@@ -919,9 +932,9 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(undefined as any);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
-        expect(mockFs.readFileSync).not.toHaveBeenCalled();
-        expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
+        expect(fsMock.readFileSync).not.toHaveBeenCalled();
+        expect(fsMock.writeFileSync).not.toHaveBeenCalled();
       });
 
       it('should show error message when template path is null', async () => {
@@ -929,9 +942,9 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(null as any);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
-        expect(mockFs.readFileSync).not.toHaveBeenCalled();
-        expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
+        expect(fsMock.readFileSync).not.toHaveBeenCalled();
+        expect(fsMock.writeFileSync).not.toHaveBeenCalled();
       });
 
       it('should show error message when template path is whitespace only', async () => {
@@ -939,9 +952,9 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate('   ');
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
-        expect(mockFs.readFileSync).not.toHaveBeenCalled();
-        expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
+        expect(fsMock.readFileSync).not.toHaveBeenCalled();
+        expect(fsMock.writeFileSync).not.toHaveBeenCalled();
       });
     });
 
@@ -949,43 +962,43 @@ describe('SteeringTemplateProvider', () => {
       it('should show error message when no workspace folders are open', async () => {
         // Arrange
         const templatePath = '/test/templates/template.md';
-        mockVSCode.workspace.workspaceFolders = undefined;
+        vscode.workspace.workspaceFolders = undefined;
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith('No workspace folder open');
-        expect(mockFs.readFileSync).not.toHaveBeenCalled();
-        expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('No workspace folder open');
+        expect(fsMock.readFileSync).not.toHaveBeenCalled();
+        expect(fsMock.writeFileSync).not.toHaveBeenCalled();
       });
 
       it('should show error message when workspace folders array is empty', async () => {
         // Arrange
         const templatePath = '/test/templates/template.md';
-        mockVSCode.workspace.workspaceFolders = [];
+        vscode.workspace.workspaceFolders = [];
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith('No workspace folder open');
-        expect(mockFs.readFileSync).not.toHaveBeenCalled();
-        expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('No workspace folder open');
+        expect(fsMock.readFileSync).not.toHaveBeenCalled();
+        expect(fsMock.writeFileSync).not.toHaveBeenCalled();
       });
 
       it('should show error message when workspace folders is null', async () => {
         // Arrange
         const templatePath = '/test/templates/template.md';
-        mockVSCode.workspace.workspaceFolders = null as any;
+        vscode.workspace.workspaceFolders = null as any;
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith('No workspace folder open');
-        expect(mockFs.readFileSync).not.toHaveBeenCalled();
-        expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('No workspace folder open');
+        expect(fsMock.readFileSync).not.toHaveBeenCalled();
+        expect(fsMock.writeFileSync).not.toHaveBeenCalled();
       });
     });
 
@@ -1000,9 +1013,9 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
-        mockFs.readFileSync.mockImplementation((path: string) => {
+        fsMock.readFileSync.mockImplementation((path: string) => {
           throw new Error(`ENOENT: no such file or directory, open '${path}'`);
         });
 
@@ -1010,10 +1023,10 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          `Failed to load template: Error: ENOENT: no such file or directory, open '${templatePath}'`
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          `Failed to load template: ENOENT: no such file or directory, open '${templatePath}'`
         );
-        expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+        expect(fsMock.writeFileSync).not.toHaveBeenCalled();
       });
 
       it('should handle permission denied error when reading template', async () => {
@@ -1026,9 +1039,9 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
-        mockFs.readFileSync.mockImplementation(() => {
+        fsMock.readFileSync.mockImplementation(() => {
           throw new Error('EACCES: permission denied, open \'/test/templates/restricted.md\'');
         });
 
@@ -1036,8 +1049,8 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Error: EACCES: permission denied, open \'/test/templates/restricted.md\''
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          'Failed to load template: EACCES: permission denied, open \'/test/templates/restricted.md\''
         );
       });
 
@@ -1055,19 +1068,29 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
-        mockFs.existsSync.mockReturnValue(false);
-        mockFs.mkdirSync.mockImplementation(() => {
-          throw new Error('EACCES: permission denied, mkdir \'/test/workspace/.kiro\'');
+        // Mock file system operations
+        fsMock.readFileSync.mockReturnValue(templateContent);
+        
+        // Mock FileSystemService.loadTemplate to return failure
+        const mockFileSystemService = (provider as any).fileSystemService;
+        vi.spyOn(mockFileSystemService, 'loadTemplate').mockResolvedValue({
+          success: false,
+          error: 'EACCES: permission denied, mkdir \'/test/workspace/.kiro\''
         });
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Error: EACCES: permission denied, mkdir \'/test/workspace/.kiro\''
+        expect(mockFileSystemService.loadTemplate).toHaveBeenCalledWith(
+          templateContent,
+          'template.md',
+          workspacePath
+        );
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          'EACCES: permission denied, mkdir \'/test/workspace/.kiro\''
         );
       });
 
@@ -1085,21 +1108,29 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
-        // Mock file system operations - directory exists, read succeeds, write fails
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockReturnValue(templateContent);
-        mockFs.writeFileSync.mockImplementation(() => {
-          throw new Error('EACCES: permission denied, open \'/test/workspace/.kiro/steering/template.md\'');
+        // Mock file system operations
+        fsMock.readFileSync.mockReturnValue(templateContent);
+        
+        // Mock FileSystemService.loadTemplate to return failure
+        const mockFileSystemService = (provider as any).fileSystemService;
+        vi.spyOn(mockFileSystemService, 'loadTemplate').mockResolvedValue({
+          success: false,
+          error: 'Permission denied writing template file'
         });
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Error: EACCES: permission denied, open \'/test/workspace/.kiro/steering/template.md\''
+        expect(mockFileSystemService.loadTemplate).toHaveBeenCalledWith(
+          templateContent,
+          'template.md',
+          workspacePath
+        );
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          'Permission denied writing template file'
         );
       });
 
@@ -1117,21 +1148,29 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
-        // Mock file system operations - directory exists, read succeeds, write fails
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockReturnValue(templateContent);
-        mockFs.writeFileSync.mockImplementation(() => {
-          throw new Error('ENOSPC: no space left on device, write');
+        // Mock file system operations
+        fsMock.readFileSync.mockReturnValue(templateContent);
+        
+        // Mock FileSystemService.loadTemplate to return failure
+        const mockFileSystemService = (provider as any).fileSystemService;
+        vi.spyOn(mockFileSystemService, 'loadTemplate').mockResolvedValue({
+          success: false,
+          error: 'Disk full'
         });
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Error: ENOSPC: no space left on device, write'
+        expect(mockFileSystemService.loadTemplate).toHaveBeenCalledWith(
+          templateContent,
+          'large-template.md',
+          workspacePath
+        );
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          'Disk full'
         );
       });
 
@@ -1149,11 +1188,11 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations - directory exists, read fails
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation(() => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation(() => {
           throw new Error('Unknown file system error');
         });
 
@@ -1161,8 +1200,8 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Error: Unknown file system error'
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          'Failed to load template: Unknown file system error'
         );
       });
     });
@@ -1174,11 +1213,11 @@ describe('SteeringTemplateProvider', () => {
         const workspacePath = '/test/workspace';
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations - directory exists, read fails with invalid name
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation(() => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation(() => {
           throw new Error('EINVAL: invalid name, open \'/test/templates/invalid<>|:*?"template.md\'');
         });
 
@@ -1186,8 +1225,8 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Error: EINVAL: invalid name, open \'/test/templates/invalid<>|:*?"template.md\''
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          'Failed to load template: EINVAL: invalid name, open \'/test/templates/invalid<>|:*?"template.md\''
         );
       });
 
@@ -1197,11 +1236,11 @@ describe('SteeringTemplateProvider', () => {
         const workspacePath = '/test/workspace';
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations - directory exists, read fails with name too long
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation(() => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation(() => {
           throw new Error('ENAMETOOLONG: name too long');
         });
 
@@ -1209,8 +1248,8 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(longPath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Error: ENAMETOOLONG: name too long'
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          'Failed to load template: ENAMETOOLONG: name too long'
         );
       });
 
@@ -1224,11 +1263,11 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations - directory exists, read fails because it's a directory
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation(() => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation(() => {
           throw new Error('EISDIR: illegal operation on a directory, read');
         });
 
@@ -1236,8 +1275,8 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Error: EISDIR: illegal operation on a directory, read'
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          'Failed to load template: EISDIR: illegal operation on a directory, read'
         );
       });
 
@@ -1259,21 +1298,29 @@ describe('SteeringTemplateProvider', () => {
           name: 'invalid-workspace',
           index: 0
         };
-        mockVSCode.workspace.workspaceFolders = [invalidWorkspaceFolder];
+        vscode.workspace.workspaceFolders = [invalidWorkspaceFolder];
 
-        // Mock file system operations - directory check fails, read succeeds but mkdir fails
-        mockFs.existsSync.mockReturnValue(false);
-        mockFs.readFileSync.mockReturnValue(templateContent);
-        mockFs.mkdirSync.mockImplementation(() => {
-          throw new Error('ENOENT: no such file or directory, mkdir');
+        // Mock file system operations
+        fsMock.readFileSync.mockReturnValue(templateContent);
+        
+        // Mock FileSystemService.loadTemplate to return failure
+        const mockFileSystemService = (provider as any).fileSystemService;
+        vi.spyOn(mockFileSystemService, 'loadTemplate').mockResolvedValue({
+          success: false,
+          error: 'ENOENT: no such file or directory, mkdir'
         });
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Error: ENOENT: no such file or directory, mkdir'
+        expect(mockFileSystemService.loadTemplate).toHaveBeenCalledWith(
+          templateContent,
+          'template.md',
+          ''
+        );
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          'ENOENT: no such file or directory, mkdir'
         );
       });
 
@@ -1291,25 +1338,25 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations with specific content
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation((path: string) => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation((path: string) => {
           if (path === templatePath) return largeContent;
           return '';
         });
-        mockFs.writeFileSync.mockReturnValue(undefined);
+        fsMock.writeFileSync.mockReturnValue(undefined);
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+        expect(fsMock.writeFileSync).toHaveBeenCalledWith(
           '/test/workspace/.kiro/steering/huge-template.md',
           largeContent
         );
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledWith(
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
           'Template "huge-template.md" loaded successfully'
         );
       });
@@ -1330,25 +1377,25 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations with specific content
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation((path: string) => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation((path: string) => {
           if (path === templatePath) return templateContent;
           return '';
         });
-        mockFs.writeFileSync.mockReturnValue(undefined);
+        fsMock.writeFileSync.mockReturnValue(undefined);
 
         // Act
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledWith(
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
           'Template "my-awesome-template.md" loaded successfully'
         );
-        expect(mockVSCode.window.showErrorMessage).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       });
 
       it('should show error message with full error details', async () => {
@@ -1362,11 +1409,11 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations - directory exists, read fails
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation(() => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation(() => {
           throw specificError;
         });
 
@@ -1374,11 +1421,11 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Error: Specific file system error with details'
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(2);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          'Failed to load template: Specific file system error with details'
         );
-        expect(mockVSCode.window.showInformationMessage).not.toHaveBeenCalled();
+        expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
       });
 
       it('should not show any messages when both template path and workspace are invalid', async () => {
@@ -1386,9 +1433,9 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate('');
 
         // Assert - should show error for missing template path first
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
-        expect(mockVSCode.window.showInformationMessage).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
+        expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
       });
 
       it('should handle multiple consecutive loadTemplate calls', async () => {
@@ -1408,30 +1455,30 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations with specific content
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.readFileSync.mockImplementation((path: string) => {
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.readFileSync.mockImplementation((path: string) => {
           if (path === templatePath1) return templateContent1;
           if (path === templatePath2) return templateContent2;
           return '';
         });
-        mockFs.writeFileSync.mockReturnValue(undefined);
+        fsMock.writeFileSync.mockReturnValue(undefined);
 
         // Act
         await provider.loadTemplate(templatePath1);
         await provider.loadTemplate(templatePath2);
 
         // Assert
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledTimes(2);
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenNthCalledWith(1,
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(2);
+        expect(vscode.window.showInformationMessage).toHaveBeenNthCalledWith(1,
           'Template "template1.md" loaded successfully'
         );
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenNthCalledWith(2,
+        expect(vscode.window.showInformationMessage).toHaveBeenNthCalledWith(2,
           'Template "template2.md" loaded successfully'
         );
-        expect(mockVSCode.window.showErrorMessage).not.toHaveBeenCalled();
+        expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       });
 
       it('should handle mixed success and error scenarios', async () => {
@@ -1449,15 +1496,15 @@ describe('SteeringTemplateProvider', () => {
         });
 
         const workspaceFolder = testHelpers.createMockWorkspaceFolder('test-workspace', workspacePath);
-        mockVSCode.workspace.workspaceFolders = [workspaceFolder];
+        vscode.workspace.workspaceFolders = [workspaceFolder];
 
         // Mock file system operations
-        mockFs.existsSync.mockReturnValue(true);
-        mockFs.writeFileSync.mockReturnValue(undefined);
+        fsMock.existsSync.mockReturnValue(true);
+        fsMock.writeFileSync.mockReturnValue(undefined);
         
         // Mock readFileSync to succeed for first call, fail for second
         let callCount = 0;
-        mockFs.readFileSync.mockImplementation((path: string) => {
+        fsMock.readFileSync.mockImplementation((path: string) => {
           callCount++;
           if (callCount === 1) {
             return templateContent;
@@ -1471,13 +1518,13 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(errorTemplatePath);
 
         // Assert
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledTimes(1);
-        expect(mockVSCode.window.showInformationMessage).toHaveBeenCalledWith(
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledTimes(1);
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
           'Template "success.md" loaded successfully'
         );
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledTimes(1);
-        expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Error: File not found'
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(2);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
+          'Failed to load template: File not found'
         );
       });
     });

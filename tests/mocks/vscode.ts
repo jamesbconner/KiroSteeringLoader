@@ -9,6 +9,8 @@ import { vi, type MockedFunction } from 'vitest';
 export interface MockedVSCodeWindow {
   showInformationMessage: MockedFunction<typeof vscode.window.showInformationMessage>;
   showErrorMessage: MockedFunction<typeof vscode.window.showErrorMessage>;
+  showWarningMessage: MockedFunction<typeof vscode.window.showWarningMessage>;
+  showInputBox: MockedFunction<typeof vscode.window.showInputBox>;
   showOpenDialog: MockedFunction<typeof vscode.window.showOpenDialog>;
   registerTreeDataProvider: MockedFunction<typeof vscode.window.registerTreeDataProvider>;
   createOutputChannel: MockedFunction<typeof vscode.window.createOutputChannel>;
@@ -234,6 +236,8 @@ export const createVSCodeMock = () => {
   const mockWindow: MockedVSCodeWindow = {
     showInformationMessage: vi.fn().mockResolvedValue(undefined),
     showErrorMessage: vi.fn().mockResolvedValue(undefined),
+    showWarningMessage: vi.fn().mockResolvedValue(undefined),
+    showInputBox: vi.fn().mockResolvedValue(undefined),
     showOpenDialog: vi.fn().mockResolvedValue(undefined),
     registerTreeDataProvider: vi.fn().mockReturnValue(new MockDisposable()),
     createOutputChannel: vi.fn().mockImplementation((name: string) => new MockOutputChannel(name))

@@ -1,6 +1,9 @@
 /**
  * Mock factory functions for creating VS Code objects with proper typing
  * These factories help create consistent, type-safe mock objects for testing
+ * 
+ * @fileoverview Updated 2025-12-13: Enhanced factories with better defaults and validation
+ * @version 2.0.0 - Improved type safety and added new utility functions
  */
 
 import { vi } from 'vitest';
@@ -230,39 +233,106 @@ export function createTestSuite() {
 
 /**
  * Type-safe factory for creating template items used in the extension
+ * Enhanced with better validation and error handling
  */
 export function createTemplateItem(
   label: string,
   templatePath: string,
   itemType: 'template' | 'info' | 'error' | 'setup'
 ): MockTreeItem {
+  // Validate inputs
+  if (!label || typeof label !== 'string') {
+    throw new Error('Template item label must be a non-empty string');
+  }
+  
+  if (!templatePath || typeof templatePath !== 'string') {
+    throw new Error('Template path must be a non-empty string');
+  }
+  
   const item = createMockTreeItem(label, TreeItemCollapsibleState.None);
   
-  // Add properties specific to TemplateItem
+  // Add properties specific to TemplateItem with proper typing
   (item as any).templatePath = templatePath;
   (item as any).itemType = itemType;
   
   // Set up command and icon based on item type
-  if (itemType === 'template') {
-    item.tooltip = `Load template: ${label}`;
-    item.command = createMockCommand(
-      'kiroSteeringLoader.loadTemplate',
-      'Load Template',
-      [templatePath]
-    );
-    item.iconPath = createMockThemeIcon('file-text');
-  } else if (itemType === 'setup') {
-    item.tooltip = 'Click to configure templates directory';
-    item.command = createMockCommand(
-      'kiroSteeringLoader.setTemplatesPath',
-      'Set Templates Path'
-    );
-    item.iconPath = createMockThemeIcon('folder-opened');
-  } else if (itemType === 'info') {
-    item.iconPath = createMockThemeIcon('info');
-  } else if (itemType === 'error') {
-    item.iconPath = createMockThemeIcon('error');
+  switch (itemType) {
+    case 'template':
+      item.tooltip = `Load template: ${label}`;
+      item.command = createMockCommand(
+        'kiroSteeringLoader.loadTemplate',
+        'Load Template',
+        [templatePath]
+      );
+      item.iconPath = createMockThemeIcon('file-text');
+      break;
+      
+    case 'setup':
+      item.tooltip = 'Click to configure templates directory';
+      item.command = createMockCommand(
+        'kiroSteeringLoader.setTemplatesPath',
+        'Set Templates Path'
+      );
+      item.iconPath = createMockThemeIcon('folder-opened');
+      break;
+      
+    case 'info':
+      item.tooltip = `Information: ${label}`;
+      item.iconPath = createMockThemeIcon('info');
+      break;
+      
+    case 'error':
+      item.tooltip = `Error: ${label}`;
+      item.iconPath = createMockThemeIcon('error');
+      break;
+      
+    default:
+      throw new Error(`Unsupported template item type: ${itemType}`);
   }
   
   return item;
+}
+
+/**
+ * Validates that a mock object has the expected structure
+ * Added for better test reliability and debugging
+ */
+export function validateMockObject<T>(
+  mockObject: T,
+  expectedProperties: (keyof T)[]
+): boolean {
+  if (!mockObject || typeof mockObject !== 'object') {
+    return false;
+  }
+  
+  return expectedProperties.every(prop => prop in mockObject);
+}
+
+/**
+ * Creates a batch of mock objects for complex test scenarios
+ * Useful for integration tests that need multiple related mocks
+ */
+export function createMockBatch(config: {
+  workspaceFolders?: Array<{ name: string; fsPath: string }>;
+  configValues?: Record<string, any>;
+  templateItems?: Array<{ label: string; path: string; type: 'template' | 'info' | 'error' | 'setup' }>;
+}) {
+  const context = createMockExtensionContext();
+  const workspaceFolders = config.workspaceFolders 
+    ? createMockWorkspaceFolders(config.workspaceFolders)
+    : [createMockWorkspaceFolder()];
+  const configuration = createMockWorkspaceConfiguration(config.configValues || {});
+  const templateItems = config.templateItems?.map(item => 
+    createTemplateItem(item.label, item.path, item.type)
+  ) || [];
+  
+  return {
+    context,
+    workspaceFolders,
+    configuration,
+    templateItems,
+    resetAll: () => {
+      vi.clearAllMocks();
+    }
+  };
 }

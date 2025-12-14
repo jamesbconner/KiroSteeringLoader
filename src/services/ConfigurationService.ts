@@ -83,7 +83,7 @@ export class ConfigurationService {
   getLocalTemplatesPath(): string | null {
     const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
     const path = config.get<string>('templatesPath');
-    return path && path.trim().length > 0 ? path : null;
+    return path && typeof path === 'string' && path.trim().length > 0 ? path : null;
   }
 
   /**

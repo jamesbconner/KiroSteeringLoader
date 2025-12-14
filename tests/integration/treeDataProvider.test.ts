@@ -99,7 +99,7 @@ describe('Tree Data Provider Integration Tests', () => {
       activate(mockContext);
 
       // Assert
-      expect(mockContext.subscriptions).toHaveLength(3); // 3 commands registered
+      expect(mockContext.subscriptions).toHaveLength(11); // 10 commands + 1 error handler registered
       // The tree data provider registration is not added to subscriptions in the current implementation
       // but the provider itself is created and registered
       const registeredProviders = getRegisteredTreeDataProviders();
@@ -124,7 +124,7 @@ describe('Tree Data Provider Integration Tests', () => {
       // Assert
       // Verify tree data provider was registered
       expect(vscodeMock.window.registerTreeDataProvider).toHaveBeenCalledTimes(1);
-      expect(vscodeMock.commands.registerCommand).toHaveBeenCalledTimes(3);
+      expect(vscodeMock.commands.registerCommand).toHaveBeenCalledTimes(10);
       
       // Both should be called during activation
       expect(vscodeMock.window.registerTreeDataProvider).toHaveBeenCalled();
@@ -264,10 +264,11 @@ describe('Tree Data Provider Integration Tests', () => {
       const children = await provider.getChildren();
 
       // Assert
-      expect(children).toHaveLength(1);
-      expect(children[0].label).toBe('Click to set templates path');
-      expect(children[0].itemType).toBe('setup');
-      expect(children[0].collapsibleState).toBe(vscode.TreeItemCollapsibleState.None);
+      expect(children).toHaveLength(2);
+      expect(children[0].itemType).toBe('info'); // Source indicator
+      expect(children[1].label).toBe('Click to configure GitHub repository');
+      expect(children[1].itemType).toBe('setup');
+      expect(children[1].collapsibleState).toBe(vscode.TreeItemCollapsibleState.None);
     });
 
     it('should generate error items when templates path does not exist', async () => {
@@ -280,11 +281,12 @@ describe('Tree Data Provider Integration Tests', () => {
       const children = await provider.getChildren();
 
       // Assert
-      expect(children).toHaveLength(2);
-      expect(children[0].label).toBe('Templates path not found');
-      expect(children[0].itemType).toBe('error');
-      expect(children[1].label).toBe('Click to set new path');
-      expect(children[1].itemType).toBe('setup');
+      expect(children).toHaveLength(3);
+      expect(children[0].itemType).toBe('info'); // Source indicator
+      expect(children[1].label).toBe('Templates path not found');
+      expect(children[1].itemType).toBe('error');
+      expect(children[2].label).toBe('Click to set new path');
+      expect(children[2].itemType).toBe('setup');
     });
 
     it('should generate info items when templates directory is empty', async () => {
@@ -300,11 +302,12 @@ describe('Tree Data Provider Integration Tests', () => {
       const children = await provider.getChildren();
 
       // Assert
-      expect(children).toHaveLength(2);
-      expect(children[0].label).toBe('No .md template files found');
-      expect(children[0].itemType).toBe('info');
-      expect(children[1].label).toBe(`Path: ${templatesPath}`);
+      expect(children).toHaveLength(3);
+      expect(children[0].itemType).toBe('info'); // Source indicator
+      expect(children[1].label).toBe('No .md template files found');
       expect(children[1].itemType).toBe('info');
+      expect(children[2].label).toBe(`Path: ${templatesPath}`);
+      expect(children[2].itemType).toBe('info');
     });
 
     it('should generate template items when templates are available', async () => {
@@ -324,13 +327,14 @@ describe('Tree Data Provider Integration Tests', () => {
       const children = await provider.getChildren();
 
       // Assert
-      expect(children).toHaveLength(2);
-      expect(children[0].label).toBe('template1');
-      expect(children[0].itemType).toBe('template');
-      expect(children[0].templatePath).toBe(`${templatesPath}/template1.md`);
-      expect(children[1].label).toBe('template2');
+      expect(children).toHaveLength(3);
+      expect(children[0].itemType).toBe('info'); // Source indicator
+      expect(children[1].label).toBe('template1');
       expect(children[1].itemType).toBe('template');
-      expect(children[1].templatePath).toBe(`${templatesPath}/template2.md`);
+      expect(children[1].templatePath).toBe(`${templatesPath}/template1.md`);
+      expect(children[2].label).toBe('template2');
+      expect(children[2].itemType).toBe('template');
+      expect(children[2].templatePath).toBe(`${templatesPath}/template2.md`);
     });
 
     it('should generate error items when directory read fails', async () => {
@@ -349,11 +353,12 @@ describe('Tree Data Provider Integration Tests', () => {
       const children = await provider.getChildren();
 
       // Assert
-      expect(children).toHaveLength(2);
-      expect(children[0].label).toBe('Error reading templates directory');
-      expect(children[0].itemType).toBe('error');
-      expect(children[1].label).toBe('Click to set new path');
-      expect(children[1].itemType).toBe('setup');
+      expect(children).toHaveLength(3);
+      expect(children[0].itemType).toBe('info'); // Source indicator
+      expect(children[1].label).toBe('Error reading templates directory');
+      expect(children[1].itemType).toBe('error');
+      expect(children[2].label).toBe('Click to set new path');
+      expect(children[2].itemType).toBe('setup');
     });
 
     it('should return TreeItem objects that VS Code can display', async () => {
@@ -369,7 +374,7 @@ describe('Tree Data Provider Integration Tests', () => {
 
       // Act
       const children = await provider.getChildren();
-      const treeItem = provider.getTreeItem(children[0]);
+      const treeItem = provider.getTreeItem(children[1]); // Skip source indicator
 
       // Assert
       expect(treeItem).toBeInstanceOf(vscode.TreeItem);
@@ -420,9 +425,10 @@ describe('Tree Data Provider Integration Tests', () => {
       const children = await provider.getChildren();
 
       // Assert
-      expect(children).toHaveLength(3);
-      expect(children.every(child => child.itemType === 'template')).toBe(true);
-      expect(children.every(child => child.templatePath.endsWith('.md'))).toBe(true);
+      expect(children).toHaveLength(4);
+      expect(children[0].itemType).toBe('info'); // Source indicator
+      expect(children.slice(1).every(child => child.itemType === 'template')).toBe(true);
+      expect(children.slice(1).every(child => child.templatePath.endsWith('.md'))).toBe(true);
     });
   });
 
@@ -447,13 +453,13 @@ describe('Tree Data Provider Integration Tests', () => {
 
       // Act
       const children = await provider.getChildren();
-      const templateItem = children[0];
+      const templateItem = children[1]; // Skip source indicator
 
       // Assert
       expect(templateItem.command).toBeDefined();
       expect(templateItem.command!.command).toBe('kiroSteeringLoader.loadTemplate');
       expect(templateItem.command!.title).toBe('Load Template');
-      expect(templateItem.command!.arguments).toEqual([templatePath]);
+      expect(templateItem.command!.arguments).toEqual([templatePath, templateItem.metadata]);
     });
 
     it('should configure setup items with setTemplatesPath command', async () => {
@@ -462,7 +468,7 @@ describe('Tree Data Provider Integration Tests', () => {
 
       // Act
       const children = await provider.getChildren();
-      const setupItem = children[0];
+      const setupItem = children[1]; // Skip source indicator
 
       // Assert
       expect(setupItem.command).toBeDefined();
@@ -482,7 +488,7 @@ describe('Tree Data Provider Integration Tests', () => {
 
       // Act
       const children = await provider.getChildren();
-      const infoItem = children[0];
+      const infoItem = children[1]; // Skip source indicator, get the actual info item
 
       // Assert
       expect(infoItem.itemType).toBe('info');
@@ -503,7 +509,7 @@ describe('Tree Data Provider Integration Tests', () => {
 
       // Act
       const children = await provider.getChildren();
-      const errorItem = children[0];
+      const errorItem = children[1]; // Skip source indicator, get the actual error item
 
       // Assert
       expect(errorItem.itemType).toBe('error');
@@ -526,13 +532,13 @@ describe('Tree Data Provider Integration Tests', () => {
       const children = await provider.getChildren();
 
       // Assert
-      expect(children).toHaveLength(2);
+      expect(children).toHaveLength(3);
       
       const complexTemplate = children.find(child => child.label === 'complex-template-name');
-      expect(complexTemplate!.command!.arguments).toEqual([`${templatesPath}/complex-template-name.md`]);
+      expect(complexTemplate!.command!.arguments).toEqual([`${templatesPath}/complex-template-name.md`, complexTemplate!.metadata]);
       
       const simpleTemplate = children.find(child => child.label === 'simple');
-      expect(simpleTemplate!.command!.arguments).toEqual([`${templatesPath}/simple.md`]);
+      expect(simpleTemplate!.command!.arguments).toEqual([`${templatesPath}/simple.md`, simpleTemplate!.metadata]);
     });
 
     it('should configure appropriate icons for different item types', async () => {
@@ -548,20 +554,20 @@ describe('Tree Data Provider Integration Tests', () => {
 
       // Act
       const templateChildren = await provider.getChildren();
-      const templateItem = templateChildren[0];
+      const templateItem = templateChildren[1]; // Skip source indicator
 
       setupConfiguration({});
       const setupChildren = await provider.getChildren();
-      const setupItem = setupChildren[0];
+      const setupItem = setupChildren[1]; // Skip source indicator
 
       setupConfiguration({ templatesPath: '/nonexistent' });
       const errorChildren = await provider.getChildren();
-      const errorItem = errorChildren[0];
+      const errorItem = errorChildren[1]; // Skip source indicator
 
       setupConfiguration({ templatesPath });
       fileSystemMockUtils.setupFileSystem({ directories: [templatesPath], files: {} });
       const infoChildren = await provider.getChildren();
-      const infoItem = infoChildren[0];
+      const infoItem = infoChildren[1]; // Skip source indicator
 
       // Assert
       expect(templateItem.iconPath).toBeInstanceOf(vscode.ThemeIcon);
@@ -590,11 +596,11 @@ describe('Tree Data Provider Integration Tests', () => {
 
       // Act
       const templateChildren = await provider.getChildren();
-      const templateItem = templateChildren[0];
+      const templateItem = templateChildren[1]; // Skip source indicator
 
       setupConfiguration({});
       const setupChildren = await provider.getChildren();
-      const setupItem = setupChildren[0];
+      const setupItem = setupChildren[1]; // Skip source indicator
 
       // Assert
       expect(templateItem.tooltip).toBe('Load template: example');
@@ -634,7 +640,7 @@ describe('Tree Data Provider Integration Tests', () => {
 
       // Act
       const children = await provider.getChildren();
-      const templateItem = children[0];
+      const templateItem = children[1]; // Skip source indicator
       
       // Simulate VS Code executing the command when tree item is clicked
       expect(templateItem.command).toBeDefined();
@@ -664,7 +670,7 @@ describe('Tree Data Provider Integration Tests', () => {
       // Arrange - start with no configuration
       setupConfiguration({});
       let children = await provider.getChildren();
-      expect(children[0].itemType).toBe('setup');
+      expect(children[1].itemType).toBe('setup'); // Skip source indicator
 
       // Act - update configuration to valid path
       const templatesPath = '/test/templates';
@@ -679,9 +685,10 @@ describe('Tree Data Provider Integration Tests', () => {
       children = await provider.getChildren();
 
       // Assert
-      expect(children).toHaveLength(1);
-      expect(children[0].itemType).toBe('template');
-      expect(children[0].label).toBe('template');
+      expect(children).toHaveLength(2);
+      expect(children[0].itemType).toBe('info'); // Source indicator
+      expect(children[1].itemType).toBe('template');
+      expect(children[1].label).toBe('template');
     });
 
     it('should handle configuration changes from valid to invalid path', async () => {
@@ -696,16 +703,17 @@ describe('Tree Data Provider Integration Tests', () => {
       });
 
       let children = await provider.getChildren();
-      expect(children[0].itemType).toBe('template');
+      expect(children[1].itemType).toBe('template'); // Skip source indicator
 
       // Act - update configuration to invalid path
       setupConfiguration({ templatesPath: '/invalid/path' });
       children = await provider.getChildren();
 
       // Assert
-      expect(children).toHaveLength(2);
-      expect(children[0].itemType).toBe('error');
-      expect(children[1].itemType).toBe('setup');
+      expect(children).toHaveLength(3);
+      expect(children[0].itemType).toBe('info'); // Source indicator
+      expect(children[1].itemType).toBe('error');
+      expect(children[2].itemType).toBe('setup');
     });
 
     it('should handle workspace changes affecting tree items', async () => {
@@ -726,8 +734,9 @@ describe('Tree Data Provider Integration Tests', () => {
       const children = await provider.getChildren();
 
       // Assert - tree items should still be generated based on configuration
-      expect(children).toHaveLength(1);
-      expect(children[0].itemType).toBe('template');
+      expect(children).toHaveLength(2);
+      expect(children[0].itemType).toBe('info'); // Source indicator
+      expect(children[1].itemType).toBe('template');
     });
   });
 });

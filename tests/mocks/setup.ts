@@ -9,15 +9,49 @@ import { createVSCodeMock } from './vscode';
 import { createFileSystemMock, fileSystemMockUtils } from './fs';
 import { createPathMock, pathMockUtils } from './path';
 
-// Create the global mocks
-const vscodeMock = createVSCodeMock();
+// Create a single mock instance that will be shared across all imports
+const sharedVSCodeMock = createVSCodeMock();
+
+// Mock the modules globally with the shared instance
+vi.mock('vscode', () => sharedVSCodeMock);
+
+vi.mock('fs', () => {
+  const fsMock = createFileSystemMock();
+  return {
+    ...fsMock,
+    default: fsMock,
+    promises: {
+      readFile: vi.fn().mockImplementation(async (path: string, encoding?: BufferEncoding) => {
+        return fsMock.readFileSync(path, encoding);
+      }),
+      writeFile: vi.fn().mockImplementation(async (path: string, data: string) => {
+        return fsMock.writeFileSync(path, data);
+      }),
+      mkdir: vi.fn().mockImplementation(async (path: string, options?: { recursive?: boolean }) => {
+        return fsMock.mkdirSync(path, options);
+      }),
+      readdir: vi.fn().mockImplementation(async (path: string) => {
+        return fsMock.readdirSync(path);
+      }),
+      rm: vi.fn().mockImplementation(async (path: string, options?: { recursive?: boolean; force?: boolean }) => {
+        return fsMock.rmSync(path, options);
+      })
+    }
+  };
+});
+
+vi.mock('path', () => {
+  const pathMock = createPathMock();
+  return {
+    ...pathMock,
+    default: pathMock
+  };
+});
+
+// Use the shared mock instance for setup functions
+const vscodeMock = sharedVSCodeMock;
 const fsMock = createFileSystemMock();
 const pathMock = createPathMock();
-
-// Mock the modules globally
-vi.mock('vscode', () => vscodeMock);
-vi.mock('fs', () => fsMock);
-vi.mock('path', () => pathMock);
 
 // Global setup for each test
 beforeEach(() => {
@@ -26,7 +60,15 @@ beforeEach(() => {
   
   // Reset VS Code mocks
   vscodeMock.workspace.workspaceFolders = undefined;
-  vscodeMock.workspace.getConfiguration().get.mockReturnValue(undefined);
+  
+  // Reset the getConfiguration mock to return a fresh configuration object
+  const mockConfig = {
+    get: vi.fn().mockReturnValue(undefined),
+    update: vi.fn().mockResolvedValue(undefined),
+    has: vi.fn().mockReturnValue(false),
+    inspect: vi.fn().mockReturnValue(undefined)
+  };
+  vscodeMock.workspace.getConfiguration.mockReturnValue(mockConfig);
   
   // Reset file system mocks
   fileSystemMockUtils.reset();
@@ -137,6 +179,20 @@ export const userInteractions = {
    */
   configUpdateFailure: (error: Error) => {
     vscodeMock.workspace.getConfiguration().update.mockRejectedValueOnce(error);
+  },
+
+  /**
+   * Simulate user input text in input box
+   */
+  inputText: (text: string) => {
+    vscodeMock.window.showInputBox.mockResolvedValueOnce(text);
+  },
+
+  /**
+   * Simulate user confirming an action in warning/confirmation dialog
+   */
+  confirmAction: (buttonText: string) => {
+    vscodeMock.window.showWarningMessage.mockResolvedValueOnce(buttonText);
   }
 };
 

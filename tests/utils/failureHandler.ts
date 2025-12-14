@@ -317,7 +317,11 @@ export function setupGlobalFailureHandling(testType: 'unit' | 'integration' | 'e
   process.on('uncaughtException', async (error) => {
     console.error('🚨 Uncaught Exception:', error);
     await handler.handleFailure('Uncaught Exception', 'process', error, 0);
-    process.exit(1);
+    
+    // Don't call process.exit in test environment to avoid infinite loops with Vitest
+    if (process.env.NODE_ENV !== 'test' && process.env.VSCODE_TEST_MODE !== 'true') {
+      process.exit(1);
+    }
   });
 
   // Handle unhandled promise rejections
@@ -325,7 +329,11 @@ export function setupGlobalFailureHandling(testType: 'unit' | 'integration' | 'e
     const error = reason instanceof Error ? reason : new Error(String(reason));
     console.error('🚨 Unhandled Promise Rejection:', error);
     await handler.handleFailure('Unhandled Promise Rejection', 'process', error, 0);
-    process.exit(1);
+    
+    // Don't call process.exit in test environment to avoid infinite loops with Vitest
+    if (process.env.NODE_ENV !== 'test' && process.env.VSCODE_TEST_MODE !== 'true') {
+      process.exit(1);
+    }
   });
 }
 

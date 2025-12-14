@@ -2,6 +2,18 @@ import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
 
 export default defineConfig({
+  // Custom plugin to handle vscode module resolution
+  plugins: [
+    {
+      name: 'vscode-mock',
+      resolveId(id) {
+        if (id === 'vscode') {
+          return resolve(__dirname, 'tests/mocks/vscode.ts');
+        }
+      }
+    }
+  ],
+  
   test: {
     // Test environment configuration
     environment: 'node',
@@ -23,7 +35,7 @@ export default defineConfig({
     ],
     
     // Global test setup
-    setupFiles: ['./tests/setup/performance-setup.ts'],
+    setupFiles: ['./tests/setup/performance-setup-simple.ts'],
     
     // Extended timeouts for performance tests
     testTimeout: 300000, // 5 minutes for large dataset tests
@@ -64,5 +76,25 @@ export default defineConfig({
   define: {
     'process.env.NODE_ENV': '"test"',
     'process.env.PERFORMANCE_TEST': '"true"'
+  },
+  
+  // External dependencies that should not be bundled
+  external: ['vscode'],
+  
+  // Rollup options for handling external modules
+  build: {
+    rollupOptions: {
+      external: ['vscode']
+    }
+  },
+  
+  // Optimization dependencies configuration
+  optimizeDeps: {
+    exclude: ['vscode']
+  },
+  
+  // Server-side rendering configuration
+  ssr: {
+    external: ['vscode']
   }
 });

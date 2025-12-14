@@ -12,6 +12,13 @@ out/
 *.tsbuildinfo
 *.d.ts.map
 
+# VSIX packages (build artifacts)
+*.vsix
+
+# Test output files
+test-output.txt
+tests/reports/
+
 # TypeScript Cache
 *.tscache
 

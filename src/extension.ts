@@ -53,8 +53,12 @@ export function activate(context: vscode.ExtensionContext) {
     
     // Load template command
     const loadTemplateCommand = vscode.commands.registerCommand('kiroSteeringLoader.loadTemplate', 
-        (templatePath: string, metadata?: any) => {
-            provider.loadTemplate(templatePath, metadata);
+        async (templatePath: string, metadata?: any) => {
+            try {
+                await provider.loadTemplate(templatePath, metadata);
+            } catch (error) {
+                errorHandler.handleError(error, { operation: 'Failed to load template' });
+            }
         }
     );
     

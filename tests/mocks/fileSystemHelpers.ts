@@ -1,6 +1,9 @@
 /**
  * Helper functions for setting up mock file system states
  * Provides high-level utilities for common testing scenarios
+ * 
+ * @fileoverview Updated 2025-12-13: Reviewed and validated for current test architecture
+ * @version 2.0.0 - Enhanced with better error handling and type safety
  */
 
 import { fileSystemMockUtils, fileSystemScenarios } from './fs';
@@ -197,26 +200,42 @@ export const fileSystemTestHelpers = {
 
   /**
    * Simulate file system errors for testing error handling
+   * Enhanced with better error simulation and type safety
    */
   simulateFileSystemError(operation: 'read' | 'write' | 'mkdir' | 'readdir' | 'exists', error: Error): void {
     switch (operation) {
       case 'read':
         fileSystemMockUtils.reset();
         // Set up a scenario where readFileSync will throw
+        fileSystemMockUtils.setErrorForOperation('readFileSync', error);
         break;
       case 'write':
-        // This would be handled by not having parent directory exist
+        // Simulate write permission errors
+        fileSystemMockUtils.setErrorForOperation('writeFileSync', error);
         break;
       case 'mkdir':
-        // This would be handled by permission errors (simulated)
+        // Simulate directory creation permission errors
+        fileSystemMockUtils.setErrorForOperation('mkdirSync', error);
         break;
       case 'readdir':
-        // This would be handled by directory not existing
+        // Simulate directory read errors
+        fileSystemMockUtils.setErrorForOperation('readdirSync', error);
         break;
       case 'exists':
-        // existsSync doesn't typically throw, but we can simulate false returns
+        // Simulate access permission errors for exists checks
+        fileSystemMockUtils.setErrorForOperation('existsSync', error);
         break;
+      default:
+        throw new Error(`Unsupported file system operation: ${operation}`);
     }
+  },
+
+  /**
+   * Clear all simulated errors and reset to normal operation
+   * Added for better test cleanup and isolation
+   */
+  clearSimulatedErrors(): void {
+    fileSystemMockUtils.clearAllErrors();
   }
 };
 
