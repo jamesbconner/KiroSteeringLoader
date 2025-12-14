@@ -172,8 +172,10 @@ function isValidGitHubName(name: string): boolean {
     return false;
   }
   
-  // GitHub names: alphanumeric and hyphens, cannot start with hyphen
-  const githubNameRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]*$/;
+  // GitHub names: alphanumeric, hyphens, underscores, and periods
+  // Cannot start with hyphen, period, or underscore
+  // Cannot end with period
+  const githubNameRegex = /^[a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z0-9-]$|^[a-zA-Z0-9]$/;
   return githubNameRegex.test(name);
 }
 

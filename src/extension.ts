@@ -74,7 +74,13 @@ export function activate(context: vscode.ExtensionContext) {
             
             if (result && result[0]) {
                 const config = vscode.workspace.getConfiguration('kiroSteeringLoader');
-                await config.update('templatesPath', result[0].fsPath, vscode.ConfigurationTarget.Global);
+                
+                // Use the same target logic as switchToLocalMode for consistency
+                const target = vscode.workspace.workspaceFolders 
+                    ? vscode.ConfigurationTarget.Workspace 
+                    : vscode.ConfigurationTarget.Global;
+                
+                await config.update('templatesPath', result[0].fsPath, target);
                 provider.refresh();
             }
         }

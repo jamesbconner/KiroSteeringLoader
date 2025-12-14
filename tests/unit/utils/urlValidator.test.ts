@@ -77,6 +77,56 @@ describe('urlValidator', () => {
           branch: 'main'
         });
       });
+
+      it('should handle repository names with underscores', () => {
+        const result = parseRepositoryUrl('https://github.com/owner/my_project');
+        
+        expect(result).toEqual({
+          owner: 'owner',
+          repo: 'my_project',
+          branch: 'main'
+        });
+      });
+
+      it('should handle repository names with periods', () => {
+        const result = parseRepositoryUrl('https://github.com/dotnet/dotnet.core');
+        
+        expect(result).toEqual({
+          owner: 'dotnet',
+          repo: 'dotnet.core',
+          branch: 'main'
+        });
+      });
+
+      it('should handle owner names with underscores', () => {
+        const result = parseRepositoryUrl('https://github.com/my_organization/project');
+        
+        expect(result).toEqual({
+          owner: 'my_organization',
+          repo: 'project',
+          branch: 'main'
+        });
+      });
+
+      it('should handle owner names with periods', () => {
+        const result = parseRepositoryUrl('https://github.com/company.inc/project');
+        
+        expect(result).toEqual({
+          owner: 'company.inc',
+          repo: 'project',
+          branch: 'main'
+        });
+      });
+
+      it('should handle complex names with mixed valid characters', () => {
+        const result = parseRepositoryUrl('https://github.com/my-org_2023/project.v2_beta-1');
+        
+        expect(result).toEqual({
+          owner: 'my-org_2023',
+          repo: 'project.v2_beta-1',
+          branch: 'main'
+        });
+      });
     });
 
     describe('short format parsing', () => {
@@ -144,6 +194,37 @@ describe('urlValidator', () => {
           branch: 'main'
         });
       });
+
+      it('should parse short format with underscores in names', () => {
+        const result = parseRepositoryUrl('my_org/my_project');
+        
+        expect(result).toEqual({
+          owner: 'my_org',
+          repo: 'my_project',
+          branch: 'main'
+        });
+      });
+
+      it('should parse short format with periods in names', () => {
+        const result = parseRepositoryUrl('company.inc/project.core');
+        
+        expect(result).toEqual({
+          owner: 'company.inc',
+          repo: 'project.core',
+          branch: 'main'
+        });
+      });
+
+      it('should parse short format with mixed valid characters', () => {
+        const result = parseRepositoryUrl('my-org_2023/project.v2_beta-1/src/main');
+        
+        expect(result).toEqual({
+          owner: 'my-org_2023',
+          repo: 'project.v2_beta-1',
+          path: 'src/main',
+          branch: 'main'
+        });
+      });
     });
 
     describe('whitespace handling', () => {
@@ -202,6 +283,54 @@ describe('urlValidator', () => {
       it('should return null for repo name with special characters', () => {
         const result = parseRepositoryUrl('microsoft/vs@code');
         expect(result).toBeNull();
+      });
+
+      it('should return null for owner name starting with underscore', () => {
+        const result = parseRepositoryUrl('_microsoft/vscode');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for repo name starting with underscore', () => {
+        const result = parseRepositoryUrl('microsoft/_vscode');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for owner name starting with period', () => {
+        const result = parseRepositoryUrl('.microsoft/vscode');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for repo name starting with period', () => {
+        const result = parseRepositoryUrl('microsoft/.vscode');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for owner name ending with period', () => {
+        const result = parseRepositoryUrl('microsoft./vscode');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for repo name ending with period', () => {
+        const result = parseRepositoryUrl('microsoft/vscode.');
+        expect(result).toBeNull();
+      });
+
+      it('should accept single character names', () => {
+        const result = parseRepositoryUrl('a/b');
+        expect(result).toEqual({
+          owner: 'a',
+          repo: 'b',
+          branch: 'main'
+        });
+      });
+
+      it('should accept single digit names', () => {
+        const result = parseRepositoryUrl('1/2');
+        expect(result).toEqual({
+          owner: '1',
+          repo: '2',
+          branch: 'main'
+        });
       });
 
       it('should return null for empty owner name', () => {
@@ -482,7 +611,7 @@ describe('urlValidator', () => {
     it('should reject config with special characters in repo', () => {
       const config: RepositoryConfig = {
         owner: 'microsoft',
-        repo: 'vs.code',
+        repo: 'vs@code',
         branch: 'main'
       };
       

@@ -74,9 +74,13 @@ export class GitHubRepositoryService {
         );
       }
 
-      // Filter for markdown files only
+      // Filter for markdown files only and exclude files with null download_url
+      // GitHub API returns null download_url for files larger than 1MB
+      // These files cannot be downloaded directly and would cause confusing errors
       const markdownFiles = contents.filter(item => 
-        item.type === 'file' && item.name.endsWith('.md')
+        item.type === 'file' && 
+        item.name.endsWith('.md') &&
+        item.download_url !== null
       );
 
       // Transform to TemplateMetadata and sort alphabetically
@@ -194,6 +198,8 @@ export class GitHubRepositoryService {
    * Transforms GitHub API content to TemplateMetadata
    */
   private transformToTemplateMetadata(content: GitHubContent): TemplateMetadata {
+    // Note: download_url should never be null here due to upstream filtering,
+    // but we maintain the fallback for defensive programming
     return {
       name: content.name.replace(/\.md$/, ''),
       filename: content.name,

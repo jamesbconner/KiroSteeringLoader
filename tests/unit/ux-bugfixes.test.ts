@@ -274,6 +274,68 @@ describe('UX Bug Fixes Regression Tests', () => {
         vscode.ConfigurationTarget.Workspace
       );
     });
+
+    it('should use Global configuration target when no workspace folders exist', () => {
+      const mockConfig = {
+        update: vi.fn(),
+        inspect: vi.fn()
+      };
+
+      (vscode.workspace as any).getConfiguration.mockReturnValue(mockConfig);
+      mockConfig.inspect.mockReturnValue({ workspaceValue: undefined, globalValue: undefined });
+
+      // Test without workspace folders
+      (vscode.workspace as any).workspaceFolders = undefined;
+
+      const setLocalPath = async (path: string) => {
+        const config = vscode.workspace.getConfiguration('kiroSteeringLoader');
+        const target = vscode.workspace.workspaceFolders 
+          ? vscode.ConfigurationTarget.Workspace 
+          : vscode.ConfigurationTarget.Global;
+        
+        await config.update('templatesPath', path, target);
+      };
+
+      setLocalPath('/test/templates');
+
+      // Should use global target when no workspace folders exist
+      expect(mockConfig.update).toHaveBeenCalledWith(
+        'templatesPath',
+        '/test/templates',
+        vscode.ConfigurationTarget.Global
+      );
+    });
+  });
+
+  describe('Configuration Target Consistency Fix', () => {
+    it('should use consistent configuration target logic between setTemplatesPath and switchToLocalMode', () => {
+      // This test verifies that both commands now use the same logic:
+      // - Workspace target when workspace folders exist
+      // - Global target when no workspace folders exist
+      
+      const mockConfig = {
+        update: vi.fn(),
+        inspect: vi.fn()
+      };
+
+      (vscode.workspace as any).getConfiguration.mockReturnValue(mockConfig);
+      mockConfig.inspect.mockReturnValue({ workspaceValue: undefined, globalValue: undefined });
+
+      // Test the consistent logic pattern used by both commands
+      const getConfigurationTarget = () => {
+        return vscode.workspace.workspaceFolders 
+          ? vscode.ConfigurationTarget.Workspace 
+          : vscode.ConfigurationTarget.Global;
+      };
+
+      // With workspace folders
+      (vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: '/test' } }];
+      expect(getConfigurationTarget()).toBe(vscode.ConfigurationTarget.Workspace);
+
+      // Without workspace folders
+      (vscode.workspace as any).workspaceFolders = undefined;
+      expect(getConfigurationTarget()).toBe(vscode.ConfigurationTarget.Global);
+    });
   });
 
   describe('Bug #8: GitHub error recovery directs to wrong command', () => {

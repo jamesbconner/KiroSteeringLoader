@@ -44,7 +44,15 @@ describe('GitHubRepositoryService', () => {
         sha: 'abc123',
         size: 1024,
         type: 'file',
-        download_url: 'https://raw.githubusercontent.com/owner/repo/main/template1.md'
+        download_url: 'https://raw.githubusercontent.com/owner/repo/main/template1.md',
+        url: 'https://api.github.com/repos/owner/repo/contents/template1.md',
+        html_url: 'https://github.com/owner/repo/blob/main/template1.md',
+        git_url: 'https://api.github.com/repos/owner/repo/git/blobs/abc123',
+        _links: {
+          self: 'https://api.github.com/repos/owner/repo/contents/template1.md',
+          git: 'https://api.github.com/repos/owner/repo/git/blobs/abc123',
+          html: 'https://github.com/owner/repo/blob/main/template1.md'
+        }
       },
       {
         name: 'template2.md',
@@ -52,7 +60,15 @@ describe('GitHubRepositoryService', () => {
         sha: 'def456',
         size: 2048,
         type: 'file',
-        download_url: 'https://raw.githubusercontent.com/owner/repo/main/template2.md'
+        download_url: 'https://raw.githubusercontent.com/owner/repo/main/template2.md',
+        url: 'https://api.github.com/repos/owner/repo/contents/template2.md',
+        html_url: 'https://github.com/owner/repo/blob/main/template2.md',
+        git_url: 'https://api.github.com/repos/owner/repo/git/blobs/def456',
+        _links: {
+          self: 'https://api.github.com/repos/owner/repo/contents/template2.md',
+          git: 'https://api.github.com/repos/owner/repo/git/blobs/def456',
+          html: 'https://github.com/owner/repo/blob/main/template2.md'
+        }
       },
       {
         name: 'README.txt',
@@ -60,7 +76,15 @@ describe('GitHubRepositoryService', () => {
         sha: 'ghi789',
         size: 512,
         type: 'file',
-        download_url: 'https://raw.githubusercontent.com/owner/repo/main/README.txt'
+        download_url: 'https://raw.githubusercontent.com/owner/repo/main/README.txt',
+        url: 'https://api.github.com/repos/owner/repo/contents/README.txt',
+        html_url: 'https://github.com/owner/repo/blob/main/README.txt',
+        git_url: 'https://api.github.com/repos/owner/repo/git/blobs/ghi789',
+        _links: {
+          self: 'https://api.github.com/repos/owner/repo/contents/README.txt',
+          git: 'https://api.github.com/repos/owner/repo/git/blobs/ghi789',
+          html: 'https://github.com/owner/repo/blob/main/README.txt'
+        }
       },
       {
         name: 'subfolder',
@@ -68,7 +92,15 @@ describe('GitHubRepositoryService', () => {
         sha: 'jkl012',
         size: 0,
         type: 'dir',
-        download_url: null
+        download_url: null,
+        url: 'https://api.github.com/repos/owner/repo/contents/subfolder',
+        html_url: 'https://github.com/owner/repo/tree/main/subfolder',
+        git_url: 'https://api.github.com/repos/owner/repo/git/trees/jkl012',
+        _links: {
+          self: 'https://api.github.com/repos/owner/repo/contents/subfolder',
+          git: 'https://api.github.com/repos/owner/repo/git/trees/jkl012',
+          html: 'https://github.com/owner/repo/tree/main/subfolder'
+        }
       }
     ];
 
@@ -111,6 +143,77 @@ describe('GitHubRepositoryService', () => {
       });
     });
 
+    it('should filter out large files with null download_url', async () => {
+      // GitHub API returns null download_url for files larger than 1MB
+      const contentsWithLargeFile: GitHubContent[] = [
+        {
+          name: 'small-template.md',
+          path: 'templates/small-template.md',
+          sha: 'abc123',
+          size: 1024,
+          type: 'file',
+          download_url: 'https://raw.githubusercontent.com/owner/repo/main/small-template.md',
+          url: 'https://api.github.com/repos/owner/repo/contents/small-template.md',
+          html_url: 'https://github.com/owner/repo/blob/main/small-template.md',
+          git_url: 'https://api.github.com/repos/owner/repo/git/blobs/abc123',
+          _links: {
+            self: 'https://api.github.com/repos/owner/repo/contents/small-template.md',
+            git: 'https://api.github.com/repos/owner/repo/git/blobs/abc123',
+            html: 'https://github.com/owner/repo/blob/main/small-template.md'
+          }
+        },
+        {
+          name: 'large-template.md',
+          path: 'templates/large-template.md',
+          sha: 'def456',
+          size: 2097152, // 2MB - larger than GitHub's 1MB limit
+          type: 'file',
+          download_url: null, // GitHub returns null for large files
+          url: 'https://api.github.com/repos/owner/repo/contents/large-template.md',
+          html_url: 'https://github.com/owner/repo/blob/main/large-template.md',
+          git_url: 'https://api.github.com/repos/owner/repo/git/blobs/def456',
+          _links: {
+            self: 'https://api.github.com/repos/owner/repo/contents/large-template.md',
+            git: 'https://api.github.com/repos/owner/repo/git/blobs/def456',
+            html: 'https://github.com/owner/repo/blob/main/large-template.md'
+          }
+        },
+        {
+          name: 'another-small.md',
+          path: 'templates/another-small.md',
+          sha: 'ghi789',
+          size: 512,
+          type: 'file',
+          download_url: 'https://raw.githubusercontent.com/owner/repo/main/another-small.md',
+          url: 'https://api.github.com/repos/owner/repo/contents/another-small.md',
+          html_url: 'https://github.com/owner/repo/blob/main/another-small.md',
+          git_url: 'https://api.github.com/repos/owner/repo/git/blobs/ghi789',
+          _links: {
+            self: 'https://api.github.com/repos/owner/repo/contents/another-small.md',
+            git: 'https://api.github.com/repos/owner/repo/git/blobs/ghi789',
+            html: 'https://github.com/owner/repo/blob/main/another-small.md'
+          }
+        }
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => contentsWithLargeFile
+      });
+
+      const result = await service.fetchTemplates('owner', 'repo');
+
+      // Should only return the two small files, filtering out the large file with null download_url
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe('another-small');
+      expect(result[0].downloadUrl).toBe('https://raw.githubusercontent.com/owner/repo/main/another-small.md');
+      expect(result[1].name).toBe('small-template');
+      expect(result[1].downloadUrl).toBe('https://raw.githubusercontent.com/owner/repo/main/small-template.md');
+      
+      // Verify the large file is not included
+      expect(result.find(template => template.name === 'large-template')).toBeUndefined();
+    });
+
     it('should fetch templates from specific path', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -133,7 +236,15 @@ describe('GitHubRepositoryService', () => {
           sha: 'abc',
           size: 100,
           type: 'file',
-          download_url: 'https://example.com/zebra.md'
+          download_url: 'https://example.com/zebra.md',
+          url: 'https://api.github.com/repos/owner/repo/contents/zebra.md',
+          html_url: 'https://github.com/owner/repo/blob/main/zebra.md',
+          git_url: 'https://api.github.com/repos/owner/repo/git/blobs/abc',
+          _links: {
+            self: 'https://api.github.com/repos/owner/repo/contents/zebra.md',
+            git: 'https://api.github.com/repos/owner/repo/git/blobs/abc',
+            html: 'https://github.com/owner/repo/blob/main/zebra.md'
+          }
         },
         {
           name: 'alpha.md',
@@ -141,7 +252,15 @@ describe('GitHubRepositoryService', () => {
           sha: 'def',
           size: 200,
           type: 'file',
-          download_url: 'https://example.com/alpha.md'
+          download_url: 'https://example.com/alpha.md',
+          url: 'https://api.github.com/repos/owner/repo/contents/alpha.md',
+          html_url: 'https://github.com/owner/repo/blob/main/alpha.md',
+          git_url: 'https://api.github.com/repos/owner/repo/git/blobs/def',
+          _links: {
+            self: 'https://api.github.com/repos/owner/repo/contents/alpha.md',
+            git: 'https://api.github.com/repos/owner/repo/git/blobs/def',
+            html: 'https://github.com/owner/repo/blob/main/alpha.md'
+          }
         }
       ];
 
@@ -632,14 +751,22 @@ describe('GitHubRepositoryService', () => {
       expect(result).toEqual([]);
     });
 
-    it('should handle missing download_url in content', async () => {
+    it('should filter out files with missing download_url (large files)', async () => {
       const contentWithoutUrl: GitHubContent[] = [{
         name: 'template.md',
         path: 'template.md',
         sha: 'abc123',
         size: 1024,
         type: 'file',
-        download_url: null
+        download_url: null,
+        url: 'https://api.github.com/repos/owner/repo/contents/template.md',
+        html_url: 'https://github.com/owner/repo/blob/main/template.md',
+        git_url: 'https://api.github.com/repos/owner/repo/git/blobs/abc123',
+        _links: {
+          self: 'https://api.github.com/repos/owner/repo/contents/template.md',
+          git: 'https://api.github.com/repos/owner/repo/git/blobs/abc123',
+          html: 'https://github.com/owner/repo/blob/main/template.md'
+        }
       }];
 
       mockFetch.mockResolvedValueOnce({
@@ -648,7 +775,8 @@ describe('GitHubRepositoryService', () => {
       });
 
       const result = await service.fetchTemplates('owner', 'repo');
-      expect(result[0].downloadUrl).toBe('');
+      // Files with null download_url should be filtered out completely
+      expect(result).toHaveLength(0);
     });
   });
 });
