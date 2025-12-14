@@ -121,7 +121,7 @@ describe('GitHub Tree Provider Integration Tests', () => {
     const children = await provider.getChildren();
 
     // Assert
-    expect(mockGitHubService.fetchTemplates).toHaveBeenCalledWith('test-owner', 'test-repo', undefined);
+    expect(mockGitHubService.fetchTemplates).toHaveBeenCalledWith('test-owner', 'test-repo', undefined, undefined);
     expect(mockCacheManager.setCachedTemplates).toHaveBeenCalled();
     expect(children.length).toBeGreaterThan(0);
   });

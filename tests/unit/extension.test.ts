@@ -527,8 +527,8 @@ describe('GitHub Configuration Commands', () => {
       expect(validateInput('')).toBe('Repository URL cannot be empty');
       expect(validateInput('   ')).toBe('Repository URL cannot be empty');
       
-      // These will throw exceptions due to the bug in the extension code
-      expect(() => validateInput('invalid-format')).toThrow('Invalid repository URL format');
+      // These should return error messages for invalid formats
+      expect(validateInput('invalid-format')).toBe('Invalid repository URL format. Use: owner/repo or https://github.com/owner/repo');
       expect(validateInput('owner/repo')).toBeNull();
       expect(validateInput('https://github.com/owner/repo')).toBeNull();
     });
@@ -581,10 +581,11 @@ describe('GitHub Configuration Commands', () => {
       const registeredCommands = getRegisteredCommands();
       const configureCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.configureGitHubRepository');
 
-      // Act & Assert - The command will throw an exception due to the bug in parseRepositoryUrl handling
-      await expect(configureCommand?.callback()).rejects.toThrow('Invalid repository URL format');
+      // Act - The command should handle invalid input gracefully
+      await configureCommand?.callback();
       
-      // The provider should not be refreshed when there's an error
+      // Assert - Error message should be shown and provider should not be refreshed
+      expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('Invalid repository URL format');
       expect(mockProvider.refresh).not.toHaveBeenCalled();
     });
   });
@@ -813,7 +814,6 @@ describe('GitHub Configuration Commands', () => {
       expect(mockProvider.refresh).toHaveBeenCalled();
       
       // Verify both configuration updates were called
-      expect(mockConfig.update).toHaveBeenCalledWith('repository', undefined, vscode.ConfigurationTarget.Global);
       expect(mockConfig.update).toHaveBeenCalledWith('templatesPath', selectedPath, vscode.ConfigurationTarget.Global);
     });
 

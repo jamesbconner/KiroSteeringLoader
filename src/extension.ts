@@ -112,7 +112,7 @@ export function activate(context: vscode.ExtensionContext) {
             const pathInput = await vscode.window.showInputBox({
                 prompt: 'Enter subdirectory path (optional)',
                 placeHolder: 'e.g., templates/steering',
-                value: ''
+                value: parsed.path || ''
             });
             
             // Optional: Ask for branch

@@ -20,14 +20,20 @@ export class GitHubRepositoryService {
    * @param owner - Repository owner
    * @param repo - Repository name
    * @param path - Optional subdirectory path
+   * @param branch - Optional branch name (defaults to repository's default branch)
    * @returns Array of template metadata
    */
-  async fetchTemplates(owner: string, repo: string, path?: string): Promise<TemplateMetadata[]> {
+  async fetchTemplates(owner: string, repo: string, path?: string, branch?: string): Promise<TemplateMetadata[]> {
     const apiPath = path ? `/repos/${owner}/${repo}/contents/${path}` : `/repos/${owner}/${repo}/contents`;
-    const url = `${GITHUB_API_BASE}${apiPath}`;
+    const url = new URL(`${GITHUB_API_BASE}${apiPath}`);
+    
+    // Add branch parameter if specified
+    if (branch) {
+      url.searchParams.set('ref', branch);
+    }
 
     try {
-      const response = await this.fetchWithRetry(url);
+      const response = await this.fetchWithRetry(url.toString());
       const responseData = await response.json();
 
       // Handle both single file and directory responses

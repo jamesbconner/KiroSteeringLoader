@@ -5,48 +5,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as vscode from 'vscode';
+import '../mocks/setup'; // Import mock setup first
+import { vscode, fsMock, fileSystemMockUtils } from '../mocks/setup';
 import { SteeringTemplateProvider } from '../../src/steeringTemplateProvider';
 import { ConfigurationService } from '../../src/services/ConfigurationService';
 import { ErrorHandler } from '../../src/services/ErrorHandler';
 import { FileSystemService } from '../../src/services/FileSystemService';
-
-// Mock vscode module
-vi.mock('vscode', () => ({
-  TreeItem: class MockTreeItem {
-    constructor(label: string, collapsibleState: any) {
-      this.label = label;
-      this.collapsibleState = collapsibleState;
-    }
-  },
-  TreeItemCollapsibleState: {
-    None: 0,
-    Collapsed: 1,
-    Expanded: 2
-  },
-  ThemeIcon: class MockThemeIcon {
-    constructor(id: string) {
-      this.id = id;
-    }
-  },
-  ConfigurationTarget: {
-    Global: 1,
-    Workspace: 2,
-    WorkspaceFolder: 3
-  },
-  workspace: {
-    getConfiguration: vi.fn(),
-    workspaceFolders: []
-  },
-  window: {
-    showErrorMessage: vi.fn(),
-    showInformationMessage: vi.fn()
-  },
-  EventEmitter: class MockEventEmitter {
-    fire = vi.fn();
-    event = vi.fn();
-  }
-}));
+import { GitHubSteeringError, ErrorCode } from '../../src/errors';
 
 describe('UX Bug Fixes Regression Tests', () => {
   let mockContext: any;
@@ -57,12 +22,22 @@ describe('UX Bug Fixes Regression Tests', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    fileSystemMockUtils.reset();
+    
+    // Reset VSCode mocks completely
+    vscode.window.showErrorMessage.mockClear();
+    vscode.window.showInformationMessage.mockClear();
+    vscode.workspace.workspaceFolders = undefined;
 
     mockContext = {
+      subscriptions: [],
+      extensionPath: '/test/extension',
+      workspaceState: { get: vi.fn(), update: vi.fn() },
+      globalState: { get: vi.fn(), update: vi.fn() },
       secrets: {
-        get: vi.fn(),
-        store: vi.fn(),
-        delete: vi.fn()
+        get: vi.fn().mockResolvedValue(null),
+        store: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(undefined)
       }
     };
 
@@ -147,6 +122,18 @@ describe('UX Bug Fixes Regression Tests', () => {
     });
 
     it('should show success message when template loads successfully', async () => {
+      // Set up file system with template content
+      const templatePath = '/test/template.md';
+      const templateContent = '# Test Template Content';
+      const workspacePath = '/test/workspace';
+
+      fileSystemMockUtils.setupFileSystem({
+        directories: ['/test', workspacePath],
+        files: {
+          [templatePath]: templateContent
+        }
+      });
+
       // Mock successful template load
       mockFileSystemService.loadTemplate.mockResolvedValue({
         success: true,
@@ -154,9 +141,9 @@ describe('UX Bug Fixes Regression Tests', () => {
       });
 
       // Mock workspace folder
-      (vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: '/test/workspace' } }];
+      vscode.workspace.workspaceFolders = [{ uri: { fsPath: workspacePath } }];
 
-      await provider.loadTemplate('/test/template.md');
+      await provider.loadTemplate(templatePath);
 
       // Should show success message
       expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
@@ -253,7 +240,7 @@ describe('UX Bug Fixes Regression Tests', () => {
       expect(mockConfig.update).toHaveBeenCalledWith(
         'repository',
         undefined,
-        vscode.ConfigurationTarget.Global
+        vscode.ConfigurationTarget.Workspace
       );
     });
 
@@ -297,10 +284,15 @@ describe('UX Bug Fixes Regression Tests', () => {
         repo: 'test'
       });
 
-      // Mock GitHub service to throw an error
+      // Mock GitHub service to throw a GitHubSteeringError
       const mockGithubService = {
         setAuthToken: vi.fn(),
-        fetchTemplates: vi.fn().mockRejectedValue(new Error('Repository not found'))
+        fetchTemplates: vi.fn().mockRejectedValue(
+          new GitHubSteeringError('Repository not found', ErrorCode.GITHUB_REPO_NOT_FOUND)
+        ),
+        fetchFileContent: vi.fn(),
+        validateRepository: vi.fn(),
+        getRateLimitStatus: vi.fn()
       };
 
       const providerWithGithub = new SteeringTemplateProvider(
@@ -363,65 +355,66 @@ describe('UX Bug Fixes Regression Tests', () => {
       expect((setupItem as any).command?.command).toBe('kiroSteeringLoader.setTemplatesPath');
     });
 
-    it('should distinguish between github-setup and setup item types', () => {
-      // Test TemplateItem constructor behavior
-      const githubSetupItem = new (require('../../src/steeringTemplateProvider').SteeringTemplateProvider.TemplateItem || class {
-        constructor(label: string, path: string, state: any, type: string) {
-          this.label = label;
-          this.templatePath = path;
-          this.collapsibleState = state;
-          this.itemType = type;
-          
-          if (type === 'github-setup') {
-            this.command = {
-              command: 'kiroSteeringLoader.configureGitHubRepository',
-              title: 'Configure GitHub Repository'
-            };
-          } else if (type === 'setup') {
-            this.command = {
-              command: 'kiroSteeringLoader.setTemplatesPath',
-              title: 'Set Templates Path'
-            };
-          }
-        }
-      })(
-        'Test GitHub Setup',
-        '',
-        0,
-        'github-setup'
-      );
-
-      const localSetupItem = new (require('../../src/steeringTemplateProvider').SteeringTemplateProvider.TemplateItem || class {
-        constructor(label: string, path: string, state: any, type: string) {
-          this.label = label;
-          this.templatePath = path;
-          this.collapsibleState = state;
-          this.itemType = type;
-          
-          if (type === 'github-setup') {
-            this.command = {
-              command: 'kiroSteeringLoader.configureGitHubRepository',
-              title: 'Configure GitHub Repository'
-            };
-          } else if (type === 'setup') {
-            this.command = {
-              command: 'kiroSteeringLoader.setTemplatesPath',
-              title: 'Set Templates Path'
-            };
-          }
-        }
-      })(
-        'Test Local Setup',
-        '',
-        0,
-        'setup'
-      );
-
-      // GitHub setup should use GitHub configuration command
-      expect(githubSetupItem.command?.command).toBe('kiroSteeringLoader.configureGitHubRepository');
+    it('should distinguish between github-setup and setup item types', async () => {
+      // Test that different configuration scenarios produce different item types
       
-      // Local setup should use local path configuration command
-      expect(localSetupItem.command?.command).toBe('kiroSteeringLoader.setTemplatesPath');
+      // Test GitHub setup scenario
+      mockConfigService.getConfigurationSource.mockReturnValue('github');
+      mockConfigService.getRepositoryConfig.mockReturnValue({
+        owner: 'test',
+        repo: 'test'
+      });
+
+      const mockGithubServiceForTest = {
+        setAuthToken: vi.fn(),
+        fetchTemplates: vi.fn().mockRejectedValue(
+          new GitHubSteeringError('Repository not found', ErrorCode.GITHUB_REPO_NOT_FOUND)
+        ),
+        fetchFileContent: vi.fn(),
+        validateRepository: vi.fn(),
+        getRateLimitStatus: vi.fn()
+      };
+
+      const githubProvider = new SteeringTemplateProvider(
+        mockContext,
+        mockConfigService,
+        mockGithubServiceForTest,
+        undefined, // cacheManager
+        mockFileSystemService,
+        mockErrorHandler
+      );
+
+      const githubItems = await githubProvider.getChildren();
+      const githubSetupItem = githubItems.find(item => 
+        (item as any).itemType === 'github-setup'
+      );
+
+      expect(githubSetupItem).toBeDefined();
+      expect((githubSetupItem as any).command?.command).toBe('kiroSteeringLoader.configureGitHubRepository');
+
+      // Test local setup scenario
+      mockConfigService.getConfigurationSource.mockReturnValue('local');
+      mockConfigService.getLocalTemplatesPath.mockReturnValue('/nonexistent/path');
+
+      // Mock fs.existsSync to return false for nonexistent path
+      fsMock.existsSync.mockReturnValue(false);
+
+      const localProvider = new SteeringTemplateProvider(
+        mockContext,
+        mockConfigService,
+        undefined, // githubService
+        undefined, // cacheManager
+        mockFileSystemService,
+        mockErrorHandler
+      );
+
+      const localItems = await localProvider.getChildren();
+      const localSetupItem = localItems.find(item => 
+        (item as any).itemType === 'setup'
+      );
+
+      expect(localSetupItem).toBeDefined();
+      expect((localSetupItem as any).command?.command).toBe('kiroSteeringLoader.setTemplatesPath');
     });
   });
 

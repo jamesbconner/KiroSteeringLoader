@@ -158,7 +158,8 @@ export class SteeringTemplateProvider implements vscode.TreeDataProvider<Templat
                 templates = await this.githubService!.fetchTemplates(
                     repoConfig.owner,
                     repoConfig.repo,
-                    repoConfig.path
+                    repoConfig.path,
+                    repoConfig.branch
                 );
                 
                 // Cache the results

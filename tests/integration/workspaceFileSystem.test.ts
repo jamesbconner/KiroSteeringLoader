@@ -324,7 +324,9 @@ describe('Workspace and File System Integration Tests', () => {
 
       // Assert
       expect(vscodeMock.window.showErrorMessage).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to load template:')
+        'ENOENT: no such file or directory, open \'/test/templates/nonexistent-template.md\'',
+        'Retry',
+        'View Output'
       );
       expect(vscodeMock.window.showInformationMessage).not.toHaveBeenCalled();
     });

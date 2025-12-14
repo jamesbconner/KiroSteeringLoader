@@ -76,7 +76,13 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
     };
     
     mockErrorHandler = {
-      handleError: vi.fn(),
+      handleError: vi.fn().mockImplementation((error: any, context: any, options: any = {}) => {
+        // Mock the ErrorHandler behavior to call showErrorMessage when showNotification is true
+        if (options.showNotification !== false) {
+          const message = error instanceof Error ? error.message : String(error);
+          vscode.window.showErrorMessage(message, 'View Output');
+        }
+      }),
       logInfo: vi.fn(),
       logWarning: vi.fn(),
       showOutput: vi.fn(),
@@ -348,7 +354,8 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
 
       // Assert
       expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-        `Failed to load template: ENOENT: no such file or directory, open '${templatePath}'`
+        `ENOENT: no such file or directory, open '${templatePath}'`,
+        'View Output'
       );
       expect(mockErrorHandler.handleError).toHaveBeenCalled();
       expect(mockFileSystemService.loadTemplate).not.toHaveBeenCalled();
@@ -372,7 +379,8 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
 
       // Assert
       expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-        'Failed to load template: EACCES: permission denied, open \'/test/templates/restricted.md\''
+        'EACCES: permission denied, open \'/test/templates/restricted.md\'',
+        'View Output'
       );
       expect(mockErrorHandler.handleError).toHaveBeenCalled();
     });
@@ -405,7 +413,8 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
 
       // Assert
       expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-        'Permission denied creating directory'
+        'Permission denied creating directory',
+        'View Output'
       );
       expect(mockFileSystemService.loadTemplate).toHaveBeenCalledWith(
         templateContent,
@@ -442,7 +451,8 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
 
       // Assert
       expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-        'Permission denied writing template file'
+        'Permission denied writing template file',
+        'View Output'
       );
       expect(mockFileSystemService.loadTemplate).toHaveBeenCalledWith(
         templateContent,
@@ -507,7 +517,8 @@ describe('SteeringTemplateProvider loadTemplate method', () => {
       // Assert
       expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
       expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-        'Failed to load template: Specific file system error with details'
+        'Specific file system error with details',
+        'View Output'
       );
       expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
     });

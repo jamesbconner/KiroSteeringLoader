@@ -97,7 +97,7 @@ describe('Configuration Integration Tests', () => {
       expect(children).toHaveLength(2);
       expect(children[0].itemType).toBe('info'); // Source indicator
       expect(children[1].label).toBe('Click to configure GitHub repository');
-      expect(children[1].itemType).toBe('setup');
+      expect(children[1].itemType).toBe('github-setup');
     });
 
     it('should read configuration multiple times without caching issues', async () => {
@@ -400,7 +400,7 @@ describe('Configuration Integration Tests', () => {
       // Assert
       expect(undefinedChildren).toHaveLength(2);
       expect(undefinedChildren[0].itemType).toBe('info'); // Source indicator
-      expect(undefinedChildren[1].itemType).toBe('setup');
+      expect(undefinedChildren[1].itemType).toBe('github-setup');
       expect(definedChildren.length).toBeGreaterThan(1);
       // Skip the first item (source indicator) and check the rest are templates
       expect(definedChildren.slice(1).every(child => child.itemType === 'template')).toBe(true);
@@ -535,7 +535,7 @@ describe('Configuration Integration Tests', () => {
       expect(children).toHaveLength(2);
       expect(children[0].itemType).toBe('info'); // Source indicator
       expect(children[1].label).toBe('Click to configure GitHub repository');
-      expect(children[1].itemType).toBe('setup');
+      expect(children[1].itemType).toBe('github-setup');
     });
 
     it('should handle configuration with empty string value', async () => {
@@ -550,7 +550,7 @@ describe('Configuration Integration Tests', () => {
       expect(children).toHaveLength(2);
       expect(children[0].itemType).toBe('info'); // Source indicator
       expect(children[1].label).toBe('Click to configure GitHub repository');
-      expect(children[1].itemType).toBe('setup');
+      expect(children[1].itemType).toBe('github-setup');
     });
 
     it('should handle configuration with invalid type value', async () => {
@@ -568,15 +568,15 @@ describe('Configuration Integration Tests', () => {
       expect(children.length).toBe(2);
       expect(children[0].itemType).toBe('info'); // Source indicator
       expect(children[1].label).toBe('Click to configure GitHub repository');
-      expect(children[1].itemType).toBe('setup');
+      expect(children[1].itemType).toBe('github-setup');
     });
 
     it('should provide helpful error messages for common issues', async () => {
       // Arrange - Test various error scenarios
       const scenarios = [
-        { path: '/test/nonexistent', expectedError: 'Templates path not found' },
-        { path: '', expectedError: 'Click to set templates path' },
-        { path: undefined, expectedError: 'Click to set templates path' }
+        { path: '/test/nonexistent', expectedItemType: 'setup', expectedError: 'Templates path not found' },
+        { path: '', expectedItemType: 'github-setup', expectedError: 'Click to set templates path' },
+        { path: undefined, expectedItemType: 'github-setup', expectedError: 'Click to set templates path' }
       ];
 
       for (const scenario of scenarios) {
@@ -587,8 +587,8 @@ describe('Configuration Integration Tests', () => {
         const children = await mockProvider.getChildren();
 
         // Assert
-        // The new architecture uses different labels, so we check for the presence of setup items
-        expect(children.some(child => child.itemType === 'setup')).toBe(true);
+        // Check for the correct item type based on the scenario
+        expect(children.some(child => child.itemType === scenario.expectedItemType)).toBe(true);
       }
     });
   });
@@ -781,7 +781,7 @@ describe('Configuration Integration Tests', () => {
       expect(children).toHaveLength(2);
       expect(children[0].itemType).toBe('info'); // Source indicator
       expect(children[1].label).toBe('Click to configure GitHub repository');
-      expect(children[1].itemType).toBe('setup');
+      expect(children[1].itemType).toBe('github-setup');
     });
 
     it('should consistently use Global target for all configuration updates', async () => {

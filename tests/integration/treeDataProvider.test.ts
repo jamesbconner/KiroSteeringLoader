@@ -267,7 +267,7 @@ describe('Tree Data Provider Integration Tests', () => {
       expect(children).toHaveLength(2);
       expect(children[0].itemType).toBe('info'); // Source indicator
       expect(children[1].label).toBe('Click to configure GitHub repository');
-      expect(children[1].itemType).toBe('setup');
+      expect(children[1].itemType).toBe('github-setup');
       expect(children[1].collapsibleState).toBe(vscode.TreeItemCollapsibleState.None);
     });
 
@@ -472,8 +472,8 @@ describe('Tree Data Provider Integration Tests', () => {
 
       // Assert
       expect(setupItem.command).toBeDefined();
-      expect(setupItem.command!.command).toBe('kiroSteeringLoader.setTemplatesPath');
-      expect(setupItem.command!.title).toBe('Set Templates Path');
+      expect(setupItem.command!.command).toBe('kiroSteeringLoader.configureGitHubRepository');
+      expect(setupItem.command!.title).toBe('Configure GitHub Repository');
       expect(setupItem.command!.arguments).toBeUndefined();
     });
 
@@ -574,7 +574,7 @@ describe('Tree Data Provider Integration Tests', () => {
       expect((templateItem.iconPath as vscode.ThemeIcon).id).toBe('file-text');
 
       expect(setupItem.iconPath).toBeInstanceOf(vscode.ThemeIcon);
-      expect((setupItem.iconPath as vscode.ThemeIcon).id).toBe('folder-opened');
+      expect((setupItem.iconPath as vscode.ThemeIcon).id).toBe('github');
 
       expect(errorItem.iconPath).toBeInstanceOf(vscode.ThemeIcon);
       expect((errorItem.iconPath as vscode.ThemeIcon).id).toBe('error');
@@ -604,7 +604,7 @@ describe('Tree Data Provider Integration Tests', () => {
 
       // Assert
       expect(templateItem.tooltip).toBe('Load template: example');
-      expect(setupItem.tooltip).toBe('Click to configure templates directory');
+      expect(setupItem.tooltip).toBe('Click to configure GitHub repository');
     });
 
     it('should handle command execution through VS Code tree view clicks', async () => {
@@ -670,7 +670,7 @@ describe('Tree Data Provider Integration Tests', () => {
       // Arrange - start with no configuration
       setupConfiguration({});
       let children = await provider.getChildren();
-      expect(children[1].itemType).toBe('setup'); // Skip source indicator
+      expect(children[1].itemType).toBe('github-setup'); // Skip source indicator
 
       // Act - update configuration to valid path
       const templatesPath = '/test/templates';

@@ -311,7 +311,7 @@ describe('SteeringTemplateProvider', () => {
         expect(result).toHaveLength(2);
         expect(result[0].itemType).toBe('info'); // Source indicator
         expect(result[1].label).toBe('Click to configure GitHub repository');
-        expect(result[1].itemType).toBe('setup');
+        expect(result[1].itemType).toBe('github-setup');
       });
 
       it('should return setup item when templatesPath is empty string', async () => {
@@ -326,7 +326,7 @@ describe('SteeringTemplateProvider', () => {
         expect(result).toHaveLength(2);
         expect(result[0].itemType).toBe('info'); // Source indicator
         expect(result[1].label).toBe('Click to configure GitHub repository');
-        expect(result[1].itemType).toBe('setup');
+        expect(result[1].itemType).toBe('github-setup');
       });
 
       it('should return setup item when templatesPath is null', async () => {
@@ -341,7 +341,7 @@ describe('SteeringTemplateProvider', () => {
         expect(result).toHaveLength(2);
         expect(result[0].itemType).toBe('info'); // Source indicator
         expect(result[1].label).toBe('Click to configure GitHub repository');
-        expect(result[1].itemType).toBe('setup');
+        expect(result[1].itemType).toBe('github-setup');
       });
     });
 
@@ -1024,7 +1024,9 @@ describe('SteeringTemplateProvider', () => {
 
         // Assert
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          `Failed to load template: ENOENT: no such file or directory, open '${templatePath}'`
+          `ENOENT: no such file or directory, open '${templatePath}'`,
+          'Retry',
+          'View Output'
         );
         expect(fsMock.writeFileSync).not.toHaveBeenCalled();
       });
@@ -1050,7 +1052,9 @@ describe('SteeringTemplateProvider', () => {
 
         // Assert
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: EACCES: permission denied, open \'/test/templates/restricted.md\''
+          'EACCES: permission denied, open \'/test/templates/restricted.md\'',
+          'Retry',
+          'View Output'
         );
       });
 
@@ -1090,7 +1094,9 @@ describe('SteeringTemplateProvider', () => {
           workspacePath
         );
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          'EACCES: permission denied, mkdir \'/test/workspace/.kiro\''
+          'EACCES: permission denied, mkdir \'/test/workspace/.kiro\'',
+          'Retry',
+          'View Output'
         );
       });
 
@@ -1130,7 +1136,9 @@ describe('SteeringTemplateProvider', () => {
           workspacePath
         );
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Permission denied writing template file'
+          'Permission denied writing template file',
+          'Retry',
+          'View Output'
         );
       });
 
@@ -1170,7 +1178,9 @@ describe('SteeringTemplateProvider', () => {
           workspacePath
         );
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Disk full'
+          'Disk full',
+          'Retry',
+          'View Output'
         );
       });
 
@@ -1201,7 +1211,9 @@ describe('SteeringTemplateProvider', () => {
 
         // Assert
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Unknown file system error'
+          'Unknown file system error',
+          'Retry',
+          'View Output'
         );
       });
     });
@@ -1226,7 +1238,9 @@ describe('SteeringTemplateProvider', () => {
 
         // Assert
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: EINVAL: invalid name, open \'/test/templates/invalid<>|:*?"template.md\''
+          'EINVAL: invalid name, open \'/test/templates/invalid<>|:*?"template.md\'',
+          'Retry',
+          'View Output'
         );
       });
 
@@ -1249,7 +1263,9 @@ describe('SteeringTemplateProvider', () => {
 
         // Assert
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: ENAMETOOLONG: name too long'
+          'ENAMETOOLONG: name too long',
+          'Retry',
+          'View Output'
         );
       });
 
@@ -1276,7 +1292,9 @@ describe('SteeringTemplateProvider', () => {
 
         // Assert
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: EISDIR: illegal operation on a directory, read'
+          'EISDIR: illegal operation on a directory, read',
+          'Retry',
+          'View Output'
         );
       });
 
@@ -1320,7 +1338,9 @@ describe('SteeringTemplateProvider', () => {
           ''
         );
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          'ENOENT: no such file or directory, mkdir'
+          'ENOENT: no such file or directory, mkdir',
+          'Retry',
+          'View Output'
         );
       });
 
@@ -1421,9 +1441,11 @@ describe('SteeringTemplateProvider', () => {
         await provider.loadTemplate(templatePath);
 
         // Assert
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(2);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: Specific file system error with details'
+          'Specific file system error with details',
+          'Retry',
+          'View Output'
         );
         expect(vscode.window.showInformationMessage).not.toHaveBeenCalled();
       });
@@ -1522,9 +1544,11 @@ describe('SteeringTemplateProvider', () => {
         expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
           'Template "success.md" loaded successfully'
         );
-        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(2);
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledTimes(1);
         expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-          'Failed to load template: File not found'
+          'File not found',
+          'Retry',
+          'View Output'
         );
       });
     });

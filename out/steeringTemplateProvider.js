@@ -130,7 +130,7 @@ export class SteeringTemplateProvider {
             }
             else {
                 // Fetch from GitHub
-                templates = await this.githubService.fetchTemplates(repoConfig.owner, repoConfig.repo, repoConfig.path);
+                templates = await this.githubService.fetchTemplates(repoConfig.owner, repoConfig.repo, repoConfig.path, repoConfig.branch);
                 // Cache the results
                 this.cacheManager.setCachedTemplates(cacheKey, templates);
                 this.lastFetchTime = new Date();

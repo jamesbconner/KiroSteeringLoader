@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseRepositoryUrl, validateRepositoryConfig } from '../../../src/utils/urlValidator';
+import { parseRepositoryUrl, parseRepositoryUrlStrict, validateRepositoryConfig } from '../../../src/utils/urlValidator';
 import { GitHubSteeringError, ErrorCode } from '../../../src/errors';
 import type { RepositoryConfig } from '../../../src/types';
 
@@ -169,11 +169,58 @@ describe('urlValidator', () => {
     });
 
     describe('error handling', () => {
+      it('should return null for empty URL', () => {
+        const result = parseRepositoryUrl('');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for whitespace-only URL', () => {
+        const result = parseRepositoryUrl('   ');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for single part URL', () => {
+        const result = parseRepositoryUrl('microsoft');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for invalid owner name starting with hyphen', () => {
+        const result = parseRepositoryUrl('-microsoft/vscode');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for invalid repo name starting with hyphen', () => {
+        const result = parseRepositoryUrl('microsoft/-vscode');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for owner name with special characters', () => {
+        const result = parseRepositoryUrl('micro$oft/vscode');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for repo name with special characters', () => {
+        const result = parseRepositoryUrl('microsoft/vs@code');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for empty owner name', () => {
+        const result = parseRepositoryUrl('/vscode');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for empty repo name', () => {
+        const result = parseRepositoryUrl('microsoft/');
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('parseRepositoryUrlStrict error handling', () => {
       it('should throw error for empty URL', () => {
-        expect(() => parseRepositoryUrl('')).toThrow(GitHubSteeringError);
+        expect(() => parseRepositoryUrlStrict('')).toThrow(GitHubSteeringError);
         
         try {
-          parseRepositoryUrl('');
+          parseRepositoryUrlStrict('');
         } catch (error) {
           expect(error).toBeInstanceOf(GitHubSteeringError);
           expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
@@ -182,10 +229,10 @@ describe('urlValidator', () => {
       });
 
       it('should throw error for whitespace-only URL', () => {
-        expect(() => parseRepositoryUrl('   ')).toThrow(GitHubSteeringError);
+        expect(() => parseRepositoryUrlStrict('   ')).toThrow(GitHubSteeringError);
         
         try {
-          parseRepositoryUrl('   ');
+          parseRepositoryUrlStrict('   ');
         } catch (error) {
           expect(error).toBeInstanceOf(GitHubSteeringError);
           expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
@@ -194,10 +241,10 @@ describe('urlValidator', () => {
       });
 
       it('should throw error for single part URL', () => {
-        expect(() => parseRepositoryUrl('microsoft')).toThrow(GitHubSteeringError);
+        expect(() => parseRepositoryUrlStrict('microsoft')).toThrow(GitHubSteeringError);
         
         try {
-          parseRepositoryUrl('microsoft');
+          parseRepositoryUrlStrict('microsoft');
         } catch (error) {
           expect(error).toBeInstanceOf(GitHubSteeringError);
           expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
@@ -206,10 +253,10 @@ describe('urlValidator', () => {
       });
 
       it('should throw error for invalid owner name starting with hyphen', () => {
-        expect(() => parseRepositoryUrl('-microsoft/vscode')).toThrow(GitHubSteeringError);
+        expect(() => parseRepositoryUrlStrict('-microsoft/vscode')).toThrow(GitHubSteeringError);
         
         try {
-          parseRepositoryUrl('-microsoft/vscode');
+          parseRepositoryUrlStrict('-microsoft/vscode');
         } catch (error) {
           expect(error).toBeInstanceOf(GitHubSteeringError);
           expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
@@ -218,10 +265,10 @@ describe('urlValidator', () => {
       });
 
       it('should throw error for invalid repo name starting with hyphen', () => {
-        expect(() => parseRepositoryUrl('microsoft/-vscode')).toThrow(GitHubSteeringError);
+        expect(() => parseRepositoryUrlStrict('microsoft/-vscode')).toThrow(GitHubSteeringError);
         
         try {
-          parseRepositoryUrl('microsoft/-vscode');
+          parseRepositoryUrlStrict('microsoft/-vscode');
         } catch (error) {
           expect(error).toBeInstanceOf(GitHubSteeringError);
           expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
@@ -230,10 +277,10 @@ describe('urlValidator', () => {
       });
 
       it('should throw error for owner name with special characters', () => {
-        expect(() => parseRepositoryUrl('micro$oft/vscode')).toThrow(GitHubSteeringError);
+        expect(() => parseRepositoryUrlStrict('micro$oft/vscode')).toThrow(GitHubSteeringError);
         
         try {
-          parseRepositoryUrl('micro$oft/vscode');
+          parseRepositoryUrlStrict('micro$oft/vscode');
         } catch (error) {
           expect(error).toBeInstanceOf(GitHubSteeringError);
           expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
@@ -242,10 +289,10 @@ describe('urlValidator', () => {
       });
 
       it('should throw error for repo name with special characters', () => {
-        expect(() => parseRepositoryUrl('microsoft/vs@code')).toThrow(GitHubSteeringError);
+        expect(() => parseRepositoryUrlStrict('microsoft/vs@code')).toThrow(GitHubSteeringError);
         
         try {
-          parseRepositoryUrl('microsoft/vs@code');
+          parseRepositoryUrlStrict('microsoft/vs@code');
         } catch (error) {
           expect(error).toBeInstanceOf(GitHubSteeringError);
           expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
@@ -254,10 +301,10 @@ describe('urlValidator', () => {
       });
 
       it('should throw error for empty owner name', () => {
-        expect(() => parseRepositoryUrl('/vscode')).toThrow(GitHubSteeringError);
+        expect(() => parseRepositoryUrlStrict('/vscode')).toThrow(GitHubSteeringError);
         
         try {
-          parseRepositoryUrl('/vscode');
+          parseRepositoryUrlStrict('/vscode');
         } catch (error) {
           expect(error).toBeInstanceOf(GitHubSteeringError);
           expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);
@@ -266,10 +313,10 @@ describe('urlValidator', () => {
       });
 
       it('should throw error for empty repo name', () => {
-        expect(() => parseRepositoryUrl('microsoft/')).toThrow(GitHubSteeringError);
+        expect(() => parseRepositoryUrlStrict('microsoft/')).toThrow(GitHubSteeringError);
         
         try {
-          parseRepositoryUrl('microsoft/');
+          parseRepositoryUrlStrict('microsoft/');
         } catch (error) {
           expect(error).toBeInstanceOf(GitHubSteeringError);
           expect((error as GitHubSteeringError).code).toBe(ErrorCode.INVALID_CONFIG);

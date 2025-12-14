@@ -430,7 +430,11 @@ describe('CacheManager', () => {
         expect(stats).toEqual({
           totalEntries: 0,
           freshEntries: 0,
-          staleEntries: 0
+          staleEntries: 0,
+          configuration: {
+            ttlSeconds: 300,
+            maxEntries: 100
+          }
         });
       });
 
@@ -446,7 +450,11 @@ describe('CacheManager', () => {
         expect(stats).toEqual({
           totalEntries: 2,
           freshEntries: 2,
-          staleEntries: 0
+          staleEntries: 0,
+          configuration: {
+            ttlSeconds: 300,
+            maxEntries: 100
+          }
         });
       });
 
@@ -469,7 +477,11 @@ describe('CacheManager', () => {
         expect(stats).toEqual({
           totalEntries: 2,
           freshEntries: 1,
-          staleEntries: 1
+          staleEntries: 1,
+          configuration: {
+            ttlSeconds: 300,
+            maxEntries: 100
+          }
         });
       });
 
