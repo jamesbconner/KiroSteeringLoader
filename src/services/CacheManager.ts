@@ -46,10 +46,14 @@ export class CacheManager {
    * @param sha - Optional repository tree SHA for change detection
    */
   setCachedTemplates(cacheKey: string, templates: TemplateMetadata[], sha: string = ''): void {
-    // Enforce cache size limit with LRU eviction
-    this.enforceCacheLimit();
-    
     const fullKey = this.getFullKey(cacheKey);
+    const isExistingEntry = this.context.globalState.get<CacheEntry>(fullKey) !== undefined;
+    
+    // Only enforce cache limit if we're adding a new entry
+    if (!isExistingEntry) {
+      this.enforceCacheLimit();
+    }
+    
     const entry: CacheEntry = {
       templates,
       timestamp: Date.now(),

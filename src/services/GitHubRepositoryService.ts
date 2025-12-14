@@ -28,7 +28,45 @@ export class GitHubRepositoryService {
 
     try {
       const response = await this.fetchWithRetry(url);
-      const contents = await response.json() as GitHubContent[];
+      const responseData = await response.json();
+
+      // Handle both single file and directory responses
+      let contents: GitHubContent[];
+      
+      if (Array.isArray(responseData)) {
+        // Directory response - array of files/folders
+        contents = responseData as GitHubContent[];
+      } else if (responseData && typeof responseData === 'object' && 'type' in responseData) {
+        // Single file response - cast to GitHubContent for type safety
+        const singleFile = responseData as GitHubContent;
+        
+        if (singleFile.type === 'file') {
+          // If path points to a single file, return it if it's a markdown file
+          if (singleFile.name.endsWith('.md')) {
+            const template = this.transformToTemplateMetadata(singleFile);
+            return [template];
+          } else {
+            // Path points to a non-markdown file
+            throw new GitHubSteeringError(
+              'Path points to non-markdown file',
+              ErrorCode.INVALID_CONFIG,
+              { path, fileName: singleFile.name },
+              `The configured path "${path}" points to a file "${singleFile.name}" that is not a markdown file. Please configure a directory path containing markdown files.`
+            );
+          }
+        } else {
+          // Single directory response (shouldn't happen with GitHub API, but handle gracefully)
+          contents = [];
+        }
+      } else {
+        // Unexpected response format
+        throw new GitHubSteeringError(
+          'Unexpected GitHub API response format',
+          ErrorCode.NETWORK_ERROR,
+          { responseType: typeof responseData },
+          'Received unexpected response format from GitHub API'
+        );
+      }
 
       // Filter for markdown files only
       const markdownFiles = contents.filter(item => 

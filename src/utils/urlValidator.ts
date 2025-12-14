@@ -11,8 +11,72 @@ import { GitHubSteeringError, ErrorCode } from '../errors';
  * - https://github.com/owner/repo
  * - owner/repo
  * - owner/repo/path/to/steering
+ * 
+ * @param url - Repository URL to parse
+ * @returns RepositoryConfig object or null if invalid
  */
-export function parseRepositoryUrl(url: string): RepositoryConfig {
+export function parseRepositoryUrl(url: string): RepositoryConfig | null {
+  try {
+    const trimmed = url.trim();
+    
+    if (!trimmed) {
+      return null;
+    }
+
+    // Handle full GitHub URL format
+    const fullUrlMatch = trimmed.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
+    if (fullUrlMatch) {
+      const owner = fullUrlMatch[1];
+      const repo = fullUrlMatch[2].replace(/\.git$/, '');
+      
+      if (!isValidGitHubName(owner) || !isValidGitHubName(repo)) {
+        return null;
+      }
+      
+      return {
+        owner,
+        repo,
+        branch: 'main'
+      };
+    }
+
+    // Handle short format: owner/repo or owner/repo/path
+    const parts = trimmed.split('/');
+    if (parts.length < 2) {
+      return null;
+    }
+
+    const owner = parts[0];
+    const repo = parts[1];
+    const pathParts = parts.slice(2).filter(p => p.trim().length > 0);
+    const path = pathParts.length > 0 ? pathParts.join('/') : undefined;
+
+    // Validate owner and repo names
+    if (!isValidGitHubName(owner) || !isValidGitHubName(repo)) {
+      return null;
+    }
+
+    return {
+      owner,
+      repo,
+      path,
+      branch: 'main'
+    };
+  } catch (error) {
+    // Return null for any parsing errors
+    return null;
+  }
+}
+
+/**
+ * Parses a GitHub repository URL and throws detailed errors
+ * Use this version when you need specific error information
+ * 
+ * @param url - Repository URL to parse
+ * @returns RepositoryConfig object
+ * @throws GitHubSteeringError with specific error details
+ */
+export function parseRepositoryUrlStrict(url: string): RepositoryConfig {
   const trimmed = url.trim();
   
   if (!trimmed) {
@@ -27,9 +91,30 @@ export function parseRepositoryUrl(url: string): RepositoryConfig {
   // Handle full GitHub URL format
   const fullUrlMatch = trimmed.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)/);
   if (fullUrlMatch) {
+    const owner = fullUrlMatch[1];
+    const repo = fullUrlMatch[2].replace(/\.git$/, '');
+    
+    if (!isValidGitHubName(owner)) {
+      throw new GitHubSteeringError(
+        'Invalid owner name',
+        ErrorCode.INVALID_CONFIG,
+        { owner },
+        'Owner name contains invalid characters'
+      );
+    }
+
+    if (!isValidGitHubName(repo)) {
+      throw new GitHubSteeringError(
+        'Invalid repository name',
+        ErrorCode.INVALID_CONFIG,
+        { repo },
+        'Repository name contains invalid characters'
+      );
+    }
+    
     return {
-      owner: fullUrlMatch[1],
-      repo: fullUrlMatch[2].replace(/\.git$/, ''),
+      owner,
+      repo,
       branch: 'main'
     };
   }
