@@ -8,11 +8,54 @@ import * as vscode from 'vscode';
 import { TemplateMetadata, CacheEntry } from '../types';
 
 const CACHE_KEY_PREFIX = 'kiroSteeringLoader.cache';
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const MAX_CACHE_ENTRIES = 100;
+const DEFAULT_CACHE_TTL_SECONDS = 300; // 5 minutes
+const DEFAULT_MAX_CACHE_ENTRIES = 100;
 
 export class CacheManager {
   constructor(private context: vscode.ExtensionContext) {}
+
+  /**
+   * Gets cache TTL in milliseconds from configuration
+   * @returns Cache TTL in milliseconds
+   */
+  private getCacheTtlMs(): number {
+    try {
+      const config = vscode.workspace.getConfiguration('kiroSteeringLoader');
+      const ttlSeconds = config.get<number>('cache.ttl', DEFAULT_CACHE_TTL_SECONDS);
+      
+      // Validate TTL is a valid number and within reasonable bounds (1 minute to 1 hour)
+      if (typeof ttlSeconds !== 'number' || isNaN(ttlSeconds)) {
+        return DEFAULT_CACHE_TTL_SECONDS * 1000;
+      }
+      
+      const clampedTtl = Math.max(60, Math.min(3600, ttlSeconds));
+      return clampedTtl * 1000; // Convert to milliseconds
+    } catch (error) {
+      // Fall back to default if configuration access fails
+      return DEFAULT_CACHE_TTL_SECONDS * 1000;
+    }
+  }
+
+  /**
+   * Gets maximum cache entries from configuration
+   * @returns Maximum number of cache entries
+   */
+  private getMaxCacheEntries(): number {
+    try {
+      const config = vscode.workspace.getConfiguration('kiroSteeringLoader');
+      const maxEntries = config.get<number>('cache.maxEntries', DEFAULT_MAX_CACHE_ENTRIES);
+      
+      // Validate max entries is a valid number and within reasonable bounds (10 to 1000)
+      if (typeof maxEntries !== 'number' || isNaN(maxEntries)) {
+        return DEFAULT_MAX_CACHE_ENTRIES;
+      }
+      
+      return Math.max(10, Math.min(1000, maxEntries));
+    } catch (error) {
+      // Fall back to default if configuration access fails
+      return DEFAULT_MAX_CACHE_ENTRIES;
+    }
+  }
 
   /**
    * Retrieves cached templates if available and fresh
@@ -93,7 +136,7 @@ export class CacheManager {
   /**
    * Checks if cached data is still fresh
    * @param cacheKey - Cache key to check
-   * @returns True if cache is fresh (< 5 minutes old)
+   * @returns True if cache is fresh based on configured TTL
    */
   isCacheFresh(cacheKey: string): boolean {
     const fullKey = this.getFullKey(cacheKey);
@@ -104,7 +147,8 @@ export class CacheManager {
     }
     
     const age = Date.now() - entry.timestamp;
-    return age < CACHE_TTL_MS;
+    const cacheTtlMs = this.getCacheTtlMs();
+    return age < cacheTtlMs;
   }
 
   /**
@@ -162,8 +206,9 @@ export class CacheManager {
   private enforceCacheLimit(): void {
     const keys = this.context.globalState.keys();
     const cacheKeys = keys.filter(key => key.startsWith(CACHE_KEY_PREFIX) && !key.includes('accessTimes'));
+    const maxCacheEntries = this.getMaxCacheEntries();
     
-    if (cacheKeys.length >= MAX_CACHE_ENTRIES) {
+    if (cacheKeys.length >= maxCacheEntries) {
       // Get access times
       const accessTimes = this.context.globalState.get<Record<string, number>>(this.getAccessTimesKey(), {});
       
@@ -189,12 +234,16 @@ export class CacheManager {
   }
 
   /**
-   * Gets cache statistics
+   * Gets cache statistics including configuration
    */
   getCacheStats(): {
     totalEntries: number;
     freshEntries: number;
     staleEntries: number;
+    configuration: {
+      ttlSeconds: number;
+      maxEntries: number;
+    };
   } {
     const keys = this.context.globalState.keys();
     const cacheKeys = keys.filter(key => key.startsWith(CACHE_KEY_PREFIX) && !key.includes('accessTimes'));
@@ -214,7 +263,28 @@ export class CacheManager {
     return {
       totalEntries: cacheKeys.length,
       freshEntries,
-      staleEntries
+      staleEntries,
+      configuration: {
+        ttlSeconds: this.getCacheTtlMs() / 1000,
+        maxEntries: this.getMaxCacheEntries()
+      }
+    };
+  }
+
+  /**
+   * Gets current cache configuration
+   * @returns Current cache configuration settings
+   */
+  getCacheConfiguration(): {
+    ttlSeconds: number;
+    maxEntries: number;
+    ttlMs: number;
+  } {
+    const ttlMs = this.getCacheTtlMs();
+    return {
+      ttlSeconds: ttlMs / 1000,
+      maxEntries: this.getMaxCacheEntries(),
+      ttlMs
     };
   }
 }
