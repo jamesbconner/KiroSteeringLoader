@@ -32,10 +32,10 @@ declare class TemplateItem extends vscode.TreeItem {
     readonly label: string;
     readonly templatePath: string;
     readonly collapsibleState: vscode.TreeItemCollapsibleState;
-    readonly itemType: 'template' | 'directory' | 'info' | 'error' | 'setup';
+    readonly itemType: 'template' | 'directory' | 'info' | 'error' | 'setup' | 'github-setup';
     readonly metadata?: TemplateMetadata | undefined;
     readonly children?: TemplateItem[] | undefined;
-    constructor(label: string, templatePath: string, collapsibleState: vscode.TreeItemCollapsibleState, itemType: 'template' | 'directory' | 'info' | 'error' | 'setup', metadata?: TemplateMetadata | undefined, children?: TemplateItem[] | undefined);
+    constructor(label: string, templatePath: string, collapsibleState: vscode.TreeItemCollapsibleState, itemType: 'template' | 'directory' | 'info' | 'error' | 'setup' | 'github-setup', metadata?: TemplateMetadata | undefined, children?: TemplateItem[] | undefined);
 }
 export {};
 //# sourceMappingURL=steeringTemplateProvider.d.ts.map

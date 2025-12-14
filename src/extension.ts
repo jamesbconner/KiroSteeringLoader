@@ -205,11 +205,23 @@ export function activate(context: vscode.ExtensionContext) {
             if (result && result[0]) {
                 const config = vscode.workspace.getConfiguration('kiroSteeringLoader');
                 
-                // Clear GitHub configuration
-                await config.update('repository', undefined, vscode.ConfigurationTarget.Global);
+                // Clear GitHub configuration from both workspace and global
+                // Check which configuration target has the repository config
+                const inspection = config.inspect('repository');
                 
-                // Set local path
-                await config.update('templatesPath', result[0].fsPath, vscode.ConfigurationTarget.Global);
+                if (inspection?.workspaceValue) {
+                    await config.update('repository', undefined, vscode.ConfigurationTarget.Workspace);
+                }
+                if (inspection?.globalValue) {
+                    await config.update('repository', undefined, vscode.ConfigurationTarget.Global);
+                }
+                
+                // Set local path using the same target as ConfigurationService
+                const target = vscode.workspace.workspaceFolders 
+                    ? vscode.ConfigurationTarget.Workspace 
+                    : vscode.ConfigurationTarget.Global;
+                
+                await config.update('templatesPath', result[0].fsPath, target);
                 
                 vscode.window.showInformationMessage('Switched to local mode');
                 provider.refresh();

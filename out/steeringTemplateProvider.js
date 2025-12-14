@@ -77,7 +77,7 @@ export class SteeringTemplateProvider {
             else {
                 return [
                     sourceIndicator,
-                    new TemplateItem('Click to configure GitHub repository', '', vscode.TreeItemCollapsibleState.None, 'setup', undefined)
+                    new TemplateItem('Click to configure GitHub repository', '', vscode.TreeItemCollapsibleState.None, 'github-setup', undefined)
                 ];
             }
         }
@@ -152,7 +152,7 @@ export class SteeringTemplateProvider {
                 return [
                     sourceIndicator,
                     new TemplateItem(error.userMessage || error.message, '', vscode.TreeItemCollapsibleState.None, 'error', undefined),
-                    new TemplateItem('Click to reconfigure', '', vscode.TreeItemCollapsibleState.None, 'setup', undefined)
+                    new TemplateItem('Click to reconfigure', '', vscode.TreeItemCollapsibleState.None, 'github-setup', undefined)
                 ];
             }
             throw error;
@@ -257,20 +257,22 @@ export class SteeringTemplateProvider {
                 vscode.window.showInformationMessage(`Template "${filename}" loaded successfully`);
             }
             else {
-                this.errorHandler.handleError(new Error(result.error || 'Failed to load template'), { operation: 'Load template', details: { filename } });
-                vscode.window.showErrorMessage(result.error || 'Failed to load template');
+                // Log error and let ErrorHandler show the notification
+                this.errorHandler.handleError(new Error(result.error || 'Failed to load template'), {
+                    operation: 'Load template',
+                    details: { filename }
+                }, { showNotification: true });
             }
         }
         catch (error) {
+            // Log error and let ErrorHandler show the notification
             this.errorHandler.handleError(error, {
                 operation: 'Load template',
                 details: {
                     templatePath: templatePathOrUrl,
                     filename: metadata?.filename
                 }
-            });
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            vscode.window.showErrorMessage(`Failed to load template: ${errorMessage}`);
+            }, { showNotification: true });
         }
     }
 }
@@ -309,6 +311,14 @@ class TemplateItem extends vscode.TreeItem {
                 title: 'Set Templates Path'
             };
             this.iconPath = new vscode.ThemeIcon('folder-opened');
+        }
+        else if (itemType === 'github-setup') {
+            this.tooltip = 'Click to configure GitHub repository';
+            this.command = {
+                command: 'kiroSteeringLoader.configureGitHubRepository',
+                title: 'Configure GitHub Repository'
+            };
+            this.iconPath = new vscode.ThemeIcon('github');
         }
         else if (itemType === 'info') {
             this.iconPath = new vscode.ThemeIcon('info');
