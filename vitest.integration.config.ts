@@ -41,7 +41,7 @@ export default defineConfig({
         }
       }
     },
-    reporter: ['verbose', 'json'],
+    reporters: ['verbose', 'json'],
     outputFile: {
       json: 'coverage/integration-test-results.json'
     }

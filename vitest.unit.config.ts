@@ -43,7 +43,7 @@ export default defineConfig({
     bail: 1,
     
     // Reporter configuration
-    reporter: ['basic'],
+    reporters: ['basic'],
     
     // Coverage configuration
     coverage: {

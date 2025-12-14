@@ -1,51 +1,15 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SteeringTemplateProvider = void 0;
-const vscode = __importStar(require("vscode"));
-const fs = __importStar(require("fs"));
-const path = __importStar(require("path"));
-const ConfigurationService_1 = require("./services/ConfigurationService");
-const GitHubRepositoryService_1 = require("./services/GitHubRepositoryService");
-const CacheManager_1 = require("./services/CacheManager");
-const FileSystemService_1 = require("./services/FileSystemService");
-const ErrorHandler_1 = require("./services/ErrorHandler");
-const treeBuilder_1 = require("./utils/treeBuilder");
-const displayUtils_1 = require("./utils/displayUtils");
-const errors_1 = require("./errors");
-class SteeringTemplateProvider {
+import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+import { ConfigurationService } from './services/ConfigurationService';
+import { GitHubRepositoryService } from './services/GitHubRepositoryService';
+import { CacheManager } from './services/CacheManager';
+import { FileSystemService } from './services/FileSystemService';
+import { ErrorHandler } from './services/ErrorHandler';
+import { buildTreeStructure } from './utils/treeBuilder';
+import { formatConfigurationSource, generateTooltip } from './utils/displayUtils';
+import { GitHubSteeringError } from './errors';
+export class SteeringTemplateProvider {
     constructor(context, configService, githubService, cacheManager, fileSystemService, errorHandler) {
         this.context = context;
         this.configService = configService;
@@ -59,19 +23,19 @@ class SteeringTemplateProvider {
         this.cacheStatus = 'none';
         // Initialize services if not provided (for backward compatibility)
         if (!this.configService) {
-            this.configService = new ConfigurationService_1.ConfigurationService(context);
+            this.configService = new ConfigurationService(context);
         }
         if (!this.githubService) {
-            this.githubService = new GitHubRepositoryService_1.GitHubRepositoryService();
+            this.githubService = new GitHubRepositoryService();
         }
         if (!this.cacheManager) {
-            this.cacheManager = new CacheManager_1.CacheManager(context);
+            this.cacheManager = new CacheManager(context);
         }
         if (!this.fileSystemService) {
-            this.fileSystemService = new FileSystemService_1.FileSystemService();
+            this.fileSystemService = new FileSystemService();
         }
         if (!this.errorHandler) {
-            this.errorHandler = new ErrorHandler_1.ErrorHandler();
+            this.errorHandler = new ErrorHandler();
         }
     }
     refresh(forceRefresh = false) {
@@ -128,7 +92,7 @@ class SteeringTemplateProvider {
     createSourceIndicator(source) {
         const repoConfig = this.configService.getRepositoryConfig();
         const localPath = this.configService.getLocalTemplatesPath();
-        const sourceText = (0, displayUtils_1.formatConfigurationSource)(source, {
+        const sourceText = formatConfigurationSource(source, {
             owner: repoConfig?.owner,
             repo: repoConfig?.repo,
             path: repoConfig?.path,
@@ -179,12 +143,12 @@ class SteeringTemplateProvider {
                 ];
             }
             // Build hierarchical tree structure
-            const tree = (0, treeBuilder_1.buildTreeStructure)(templates);
+            const tree = buildTreeStructure(templates);
             const treeItems = this.convertTreeToItems(tree);
             return [sourceIndicator, ...treeItems];
         }
         catch (error) {
-            if (error instanceof errors_1.GitHubSteeringError) {
+            if (error instanceof GitHubSteeringError) {
                 return [
                     sourceIndicator,
                     new TemplateItem(error.userMessage || error.message, '', vscode.TreeItemCollapsibleState.None, 'error', undefined),
@@ -310,7 +274,6 @@ class SteeringTemplateProvider {
         }
     }
 }
-exports.SteeringTemplateProvider = SteeringTemplateProvider;
 class TemplateItem extends vscode.TreeItem {
     constructor(label, templatePath, collapsibleState, itemType, metadata, children) {
         super(label, collapsibleState);
@@ -322,7 +285,7 @@ class TemplateItem extends vscode.TreeItem {
         this.children = children;
         if (itemType === 'template') {
             if (metadata) {
-                this.tooltip = (0, displayUtils_1.generateTooltip)(metadata);
+                this.tooltip = generateTooltip(metadata);
             }
             else {
                 this.tooltip = `Load template: ${this.label}`;
