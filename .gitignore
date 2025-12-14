@@ -1,5 +1,6 @@
-# Kiro Steering Docs (exclude user-specific settings but keep templates)
-.kiro/settings/
+# Kiro IDE Configuration and User Data
+# Exclude the entire .kiro directory (contains user-specific settings, specs, and steering files)
+.kiro/
 
 # Node Modules
 node_modules
