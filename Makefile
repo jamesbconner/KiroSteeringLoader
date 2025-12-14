@@ -19,7 +19,11 @@ zip:
 ## Clean generated zip files
 clean:
 	@echo "Cleaning up zip files..."
-	@if exist *.zip del /Q *.zip
+ifeq ($(OS),Windows_NT)
+	@if exist *.zip del /Q *.zip 2>nul || echo "No zip files to clean"
+else
+	@rm -f *.zip
+endif
 	@echo "✓ Cleaned up"
 
 ## Show this help message
