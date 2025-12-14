@@ -7,6 +7,9 @@ import { beforeAll, afterAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Import VS Code mocks setup for performance tests
+import '../mocks/setup';
+
 // Global performance test configuration
 const PERFORMANCE_CONFIG = {
   // Ensure coverage directory exists for performance reports

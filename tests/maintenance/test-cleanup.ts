@@ -241,11 +241,14 @@ export class TestCleanup {
 
   private findOrphanedTestFiles(): TestStructureIssue[] {
     const issues: TestStructureIssue[] = [];
-    const testFiles = this.findTestFiles('tests');
+    const testFiles = this.findTestFiles('tests/unit'); // Only check unit tests for orphaned files
     const sourceFiles = this.findSourceFiles('src');
     
     for (const testFile of testFiles) {
       const expectedSourceFile = this.getExpectedSourceFile(testFile);
+      
+      // Skip if no expected source file (e.g., for integration/e2e tests)
+      if (!expectedSourceFile) continue;
       
       if (!sourceFiles.includes(expectedSourceFile) && !existsSync(expectedSourceFile)) {
         issues.push({
@@ -263,7 +266,7 @@ export class TestCleanup {
   private findMissingTestFiles(): TestStructureIssue[] {
     const issues: TestStructureIssue[] = [];
     const sourceFiles = this.findSourceFiles('src');
-    const testFiles = this.findTestFiles('tests');
+    const testFiles = this.findTestFiles('tests/unit').map(f => f.replace(/\\/g, '/')); // Normalize paths
     
     for (const sourceFile of sourceFiles) {
       // Skip certain files that don't need tests
@@ -271,7 +274,12 @@ export class TestCleanup {
       
       const expectedTestFile = this.getExpectedTestFile(sourceFile);
       
-      if (!testFiles.includes(expectedTestFile) && !existsSync(expectedTestFile)) {
+      // Check if expected test file exists OR if any test file imports from this source file
+      const hasTest = testFiles.includes(expectedTestFile) || 
+                     existsSync(expectedTestFile) ||
+                     this.hasTestForSourceFile(sourceFile, testFiles);
+      
+      if (!hasTest) {
         issues.push({
           type: 'missing_test',
           file: sourceFile,
@@ -411,15 +419,36 @@ export class TestCleanup {
   }
 
   private getExpectedSourceFile(testFile: string): string {
-    return testFile
-      .replace(/tests\/(unit|integration|e2e)\//, 'src/')
-      .replace(/\.(test|spec)\.ts$/, '.ts');
+    // For unit tests, map to src/ directory
+    if (testFile.includes('tests/unit/')) {
+      return testFile
+        .replace('tests/unit/', 'src/')
+        .replace(/\.(test|spec)\.ts$/, '.ts');
+    }
+    
+    // For integration and e2e tests, they don't need corresponding source files
+    // They test the integration between components or end-to-end functionality
+    return '';
   }
 
   private getExpectedTestFile(sourceFile: string): string {
-    return sourceFile
-      .replace('src/', 'tests/unit/')
-      .replace('.ts', '.test.ts');
+    // Convert Windows backslashes to forward slashes for consistent processing
+    const normalizedPath = sourceFile.replace(/\\/g, '/');
+    
+    // Handle special cases where test files don't follow exact directory structure
+    const baseName = normalizedPath.split('/').pop()?.replace('.ts', '') || '';
+    
+    // Check for alternative test file locations
+    const possibleTestFiles = [
+      // Exact structure match
+      normalizedPath.replace('src/', 'tests/unit/').replace('.ts', '.test.ts'),
+      // Flattened structure (e.g., ErrorHandler.ts -> errorHandler.test.ts)
+      `tests/unit/${baseName.toLowerCase()}.test.ts`,
+      // Service files in root of unit tests
+      `tests/unit/${baseName}.test.ts`
+    ];
+    
+    return possibleTestFiles[0]; // Return the primary expected location
   }
 
   private shouldSkipTestFile(sourceFile: string): boolean {
@@ -430,7 +459,14 @@ export class TestCleanup {
       '.d.ts',
     ];
     
-    return skipPatterns.some(pattern => sourceFile.includes(pattern));
+    // Also skip files that are primarily type definitions or configuration
+    const skipFiles = [
+      'src/types.ts',
+      'src/constants.ts',
+    ];
+    
+    return skipPatterns.some(pattern => sourceFile.includes(pattern)) ||
+           skipFiles.some(file => sourceFile.endsWith(file));
   }
 
   private getDirectorySize(dirPath: string): number {
@@ -490,4 +526,86 @@ export class TestCleanup {
     
     return titles[type as keyof typeof titles] || type;
   }
+
+  /**
+   * Check if any test file imports from the given source file
+   */
+  private hasTestForSourceFile(sourceFile: string, testFiles: string[]): boolean {
+    const { readFileSync } = require('fs');
+    
+    // Get the module name from the source file path
+    const normalizedSourceFile = sourceFile.replace(/\\/g, '/');
+    const modulePath = normalizedSourceFile.replace('src/', '');
+    const moduleBaseName = modulePath.replace('.ts', '');
+    
+    for (const testFile of testFiles) {
+      try {
+        const testContent = readFileSync(testFile.replace(/\//g, require('path').sep), 'utf8');
+        
+        // Check for various import patterns
+        const importPatterns = [
+          // Direct import: import { Something } from '../../src/services/ErrorHandler'
+          new RegExp(`from\\s+['"].*${moduleBaseName.replace(/\//g, '\\/')}['"]`, 'i'),
+          // Relative import: import { Something } from '../ErrorHandler'
+          new RegExp(`from\\s+['"][^'"]*${moduleBaseName.split('/').pop()}['"]`, 'i'),
+          // Default import: import Something from '../../src/services/ErrorHandler'
+          new RegExp(`import\\s+\\w+\\s+from\\s+['"].*${moduleBaseName.replace(/\//g, '\\/')}['"]`, 'i'),
+        ];
+        
+        if (importPatterns.some(pattern => pattern.test(testContent))) {
+          return true;
+        }
+      } catch (error) {
+        // File might not be readable, skip
+        continue;
+      }
+    }
+    
+    return false;
+  }
+}
+
+// CLI execution
+async function main(): Promise<void> {
+  try {
+    const cleanup = new TestCleanup();
+    
+    console.log('🧹 Starting test cleanup and structure validation...');
+    
+    // Generate and save cleanup report
+    const report = cleanup.generateCleanupReport();
+    
+    // Write report to file
+    const { writeFileSync, mkdirSync, existsSync } = await import('fs');
+    const { join } = await import('path');
+    
+    const reportsDir = 'tests/reports';
+    if (!existsSync(reportsDir)) {
+      mkdirSync(reportsDir, { recursive: true });
+    }
+    
+    const reportPath = join(reportsDir, 'cleanup-report.md');
+    writeFileSync(reportPath, report);
+    
+    console.log(`📋 Cleanup report saved to: ${reportPath}`);
+    
+    // Perform actual cleanup
+    const cleanupResult = cleanup.performFullCleanup();
+    
+    if (cleanupResult.issues.length > 0) {
+      console.warn('⚠️ Some cleanup issues occurred:');
+      cleanupResult.issues.forEach(issue => console.warn(`  - ${issue}`));
+    }
+    
+    console.log('✅ Test cleanup completed successfully');
+    
+  } catch (error) {
+    console.error('❌ Test cleanup failed:', error);
+    process.exit(1);
+  }
+}
+
+// Run if called directly
+if (require.main === module) {
+  main();
 }

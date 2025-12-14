@@ -64,7 +64,14 @@ describe('Extension Activation', () => {
 
       // Assert
       expect(SteeringTemplateProvider).toHaveBeenCalledTimes(1);
-      expect(SteeringTemplateProvider).toHaveBeenCalledWith(mockContext);
+      expect(SteeringTemplateProvider).toHaveBeenCalledWith(
+        mockContext,
+        expect.any(Object), // ConfigurationService
+        expect.any(Object), // GitHubRepositoryService
+        expect.any(Object), // CacheManager
+        expect.any(Object), // FileSystemService
+        expect.any(Object)  // ErrorHandler
+      );
     });
 
     it('should register tree data provider with correct view ID', () => {
@@ -91,12 +98,19 @@ describe('Extension Activation', () => {
 
       // Assert
       const registeredCommands = getRegisteredCommands();
-      expect(registeredCommands).toHaveLength(3);
+      expect(registeredCommands).toHaveLength(10);
       
       const commandNames = registeredCommands.map(cmd => cmd.command);
       expect(commandNames).toContain('kiroSteeringLoader.refresh');
+      expect(commandNames).toContain('kiroSteeringLoader.forceRefresh');
       expect(commandNames).toContain('kiroSteeringLoader.loadTemplate');
       expect(commandNames).toContain('kiroSteeringLoader.setTemplatesPath');
+      expect(commandNames).toContain('kiroSteeringLoader.configureGitHubRepository');
+      expect(commandNames).toContain('kiroSteeringLoader.configureGitHubToken');
+      expect(commandNames).toContain('kiroSteeringLoader.clearGitHubToken');
+      expect(commandNames).toContain('kiroSteeringLoader.clearCache');
+      expect(commandNames).toContain('kiroSteeringLoader.switchToLocalMode');
+      expect(commandNames).toContain('kiroSteeringLoader.switchToGitHubMode');
     });
 
     it('should add all disposables to context subscriptions', () => {
@@ -104,7 +118,7 @@ describe('Extension Activation', () => {
       activate(mockContext);
 
       // Assert
-      expect(mockContext.subscriptions).toHaveLength(3);
+      expect(mockContext.subscriptions).toHaveLength(11);
       
       // Verify all subscriptions are disposable objects
       mockContext.subscriptions.forEach(subscription => {
@@ -118,7 +132,7 @@ describe('Extension Activation', () => {
       activate(mockContext);
 
       // Assert
-      expect(vscodeMock.commands.registerCommand).toHaveBeenCalledTimes(3);
+      expect(vscodeMock.commands.registerCommand).toHaveBeenCalledTimes(10);
       
       // Verify each registerCommand call returns a disposable
       const registerCommandCalls = (vscodeMock.commands.registerCommand as MockedFunction<any>).mock.calls;
@@ -142,7 +156,7 @@ describe('Extension Activation', () => {
 
       // Assert
       expect(mockProvider.refresh).toHaveBeenCalledTimes(1);
-      expect(mockProvider.refresh).toHaveBeenCalledWith();
+      expect(mockProvider.refresh).toHaveBeenCalledWith(false);
     });
 
     it('should handle refresh command execution without errors', () => {
@@ -169,7 +183,7 @@ describe('Extension Activation', () => {
 
       // Assert
       expect(mockProvider.loadTemplate).toHaveBeenCalledTimes(1);
-      expect(mockProvider.loadTemplate).toHaveBeenCalledWith(templatePath);
+      expect(mockProvider.loadTemplate).toHaveBeenCalledWith(templatePath, undefined);
     });
 
     it('should handle loadTemplate command with undefined template path', async () => {
@@ -183,7 +197,7 @@ describe('Extension Activation', () => {
 
       // Assert
       expect(mockProvider.loadTemplate).toHaveBeenCalledTimes(1);
-      expect(mockProvider.loadTemplate).toHaveBeenCalledWith(undefined);
+      expect(mockProvider.loadTemplate).toHaveBeenCalledWith(undefined, undefined);
     });
 
     it('should handle loadTemplate errors gracefully', async () => {
@@ -194,21 +208,16 @@ describe('Extension Activation', () => {
       const registeredCommands = getRegisteredCommands();
       const loadTemplateCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.loadTemplate');
 
-      // Act - call the command and handle any potential promise rejection
-      const result = loadTemplateCommand?.callback('/test/path');
-      
-      // If the command returns a promise, we need to handle the rejection
-      if (result && typeof result.catch === 'function') {
-        result.catch(() => {
-          // Silently handle the rejection for testing purposes
-        });
+      // Act - properly await the promise and handle the rejection
+      try {
+        await loadTemplateCommand?.callback('/test/path');
+      } catch (caughtError) {
+        // Expected to catch the error
+        expect(caughtError).toBe(error);
       }
       
-      // Assert - should not throw synchronously
-      expect(() => loadTemplateCommand?.callback('/test/path')).not.toThrow();
-      
       // Verify the provider method was called
-      expect(mockProvider.loadTemplate).toHaveBeenCalledWith('/test/path');
+      expect(mockProvider.loadTemplate).toHaveBeenCalledWith('/test/path', undefined);
     });
   });
 
@@ -334,7 +343,7 @@ describe('Extension Activation', () => {
       // Arrange
       activate(mockContext);
       const initialSubscriptionCount = mockContext.subscriptions.length;
-      expect(initialSubscriptionCount).toBe(3);
+      expect(initialSubscriptionCount).toBe(11);
 
       // Act - simulate context disposal
       mockContext.subscriptions.forEach(subscription => {
@@ -342,7 +351,7 @@ describe('Extension Activation', () => {
       });
 
       // Assert - verify all disposables have dispose method and can be called
-      expect(initialSubscriptionCount).toBe(3);
+      expect(initialSubscriptionCount).toBe(11);
       mockContext.subscriptions.forEach(subscription => {
         expect(subscription).toHaveProperty('dispose');
         expect(typeof subscription.dispose).toBe('function');
@@ -354,13 +363,13 @@ describe('Extension Activation', () => {
       activate(mockContext);
 
       // Assert
-      expect(mockContext.subscriptions).toHaveLength(3);
+      expect(mockContext.subscriptions).toHaveLength(11);
       
       // Verify the order matches the registration order in activate function
       const registeredCommands = getRegisteredCommands();
       expect(registeredCommands[0].command).toBe('kiroSteeringLoader.refresh');
-      expect(registeredCommands[1].command).toBe('kiroSteeringLoader.loadTemplate');
-      expect(registeredCommands[2].command).toBe('kiroSteeringLoader.setTemplatesPath');
+      expect(registeredCommands[1].command).toBe('kiroSteeringLoader.forceRefresh');
+      expect(registeredCommands[2].command).toBe('kiroSteeringLoader.loadTemplate');
     });
 
     it('should not add duplicate subscriptions on multiple activations', () => {
@@ -373,11 +382,11 @@ describe('Extension Activation', () => {
       activate(secondContext);
 
       // Assert
-      expect(firstActivationCount).toBe(3);
-      expect(secondContext.subscriptions).toHaveLength(3);
+      expect(firstActivationCount).toBe(11);
+      expect(secondContext.subscriptions).toHaveLength(11);
       
       // Verify VS Code APIs were called the expected number of times
-      expect(vscodeMock.commands.registerCommand).toHaveBeenCalledTimes(6); // 3 commands × 2 activations
+      expect(vscodeMock.commands.registerCommand).toHaveBeenCalledTimes(20); // 10 commands × 2 activations
       expect(vscodeMock.window.registerTreeDataProvider).toHaveBeenCalledTimes(2); // 1 provider × 2 activations
     });
   });
@@ -399,7 +408,7 @@ describe('Extension Activation', () => {
       expect(registerTreeDataProviderCalls).toHaveLength(1);
       
       // Then commands should be registered
-      expect(registerCommandCalls).toHaveLength(3);
+      expect(registerCommandCalls).toHaveLength(10);
     });
 
     it('should pass the same provider instance to tree data provider and command handlers', () => {
@@ -453,6 +462,376 @@ describe('Extension Deactivation', () => {
     // Assert - no VS Code APIs should be called
     expect(vscodeSpy.commands).not.toHaveBeenCalled();
     expect(vscodeSpy.window).not.toHaveBeenCalled();
+  });
+});
+
+describe('GitHub Configuration Commands', () => {
+  let mockContext: vscode.ExtensionContext;
+  let mockProvider: any;
+
+  beforeEach(() => {
+    // Reset all mocks and set up fresh context
+    testHelpers.reset();
+    mockContext = testHelpers.createMockExtensionContext();
+    
+    // Create fresh mock provider
+    mockProvider = {
+      refresh: vi.fn(),
+      loadTemplate: vi.fn().mockResolvedValue(undefined),
+      getTreeItem: vi.fn(),
+      getChildren: vi.fn().mockResolvedValue([])
+    };
+    
+    const MockedSteeringTemplateProvider = SteeringTemplateProvider as any;
+    MockedSteeringTemplateProvider.mockImplementation(() => mockProvider);
+  });
+
+  describe('configureGitHubRepository command handler', () => {
+    it('should show input box for repository URL', async () => {
+      // Arrange
+      userInteractions.inputText('owner/repo');
+      userInteractions.inputText('templates'); // path
+      userInteractions.inputText('main'); // branch
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const configureCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.configureGitHubRepository');
+
+      // Act
+      await configureCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showInputBox).toHaveBeenCalledWith({
+        prompt: 'Enter GitHub repository URL or owner/repo',
+        placeHolder: 'e.g., https://github.com/owner/repo or owner/repo',
+        validateInput: expect.any(Function)
+      });
+    });
+
+    it('should validate repository URL input', async () => {
+      // Arrange
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const configureCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.configureGitHubRepository');
+      
+      // Get the validation function from the showInputBox call
+      userInteractions.inputText('owner/repo');
+      userInteractions.inputText(''); // path
+      userInteractions.inputText('main'); // branch
+      await configureCommand?.callback();
+      
+      const inputBoxCall = (vscodeMock.window.showInputBox as any).mock.calls[0][0];
+      const validateInput = inputBoxCall.validateInput;
+
+      // Act & Assert - The validation function currently has a bug where it doesn't catch parseRepositoryUrl exceptions
+      expect(validateInput('')).toBe('Repository URL cannot be empty');
+      expect(validateInput('   ')).toBe('Repository URL cannot be empty');
+      
+      // These should return error messages for invalid formats
+      expect(validateInput('invalid-format')).toBe('Invalid repository URL format. Use: owner/repo or https://github.com/owner/repo');
+      expect(validateInput('owner/repo')).toBeNull();
+      expect(validateInput('https://github.com/owner/repo')).toBeNull();
+    });
+
+    it('should handle user cancellation', async () => {
+      // Arrange
+      userInteractions.cancelDialog(); // Cancel repository input
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const configureCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.configureGitHubRepository');
+
+      // Act
+      await configureCommand?.callback();
+
+      // Assert - should not proceed to path/branch inputs
+      expect(vscodeMock.window.showInputBox).toHaveBeenCalledTimes(1);
+      expect(mockProvider.refresh).not.toHaveBeenCalled();
+    });
+
+    it('should configure repository with all inputs', async () => {
+      // Arrange
+      const mockConfigService = {
+        setRepositoryConfig: vi.fn().mockResolvedValue(undefined)
+      };
+      
+      userInteractions.inputText('owner/repo');
+      userInteractions.inputText('templates/steering'); // path
+      userInteractions.inputText('develop'); // branch
+      setupConfiguration({});
+      
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const configureCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.configureGitHubRepository');
+
+      // Act
+      await configureCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showInputBox).toHaveBeenCalledTimes(3); // repo, path, branch
+      expect(vscodeMock.window.showInformationMessage).toHaveBeenCalledWith('GitHub repository configured: owner/repo');
+      expect(mockProvider.refresh).toHaveBeenCalled();
+    });
+
+    it('should handle invalid repository URL format', async () => {
+      // Arrange
+      userInteractions.inputText('invalid-url-format');
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const configureCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.configureGitHubRepository');
+
+      // Act - The command should handle invalid input gracefully
+      await configureCommand?.callback();
+      
+      // Assert - Error message should be shown and provider should not be refreshed
+      expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('Invalid repository URL format');
+      expect(mockProvider.refresh).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('configureGitHubToken command handler', () => {
+    it('should show input box for GitHub token', async () => {
+      // Arrange
+      userInteractions.inputText('ghp_test_token_123456789');
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const configureCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.configureGitHubToken');
+
+      // Act
+      await configureCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showInputBox).toHaveBeenCalledWith({
+        prompt: 'Enter your GitHub Personal Access Token',
+        placeHolder: 'ghp_xxxxxxxxxxxxxxxxxxxx',
+        password: true,
+        validateInput: expect.any(Function)
+      });
+    });
+
+    it('should validate GitHub token input', async () => {
+      // Arrange
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const configureCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.configureGitHubToken');
+      
+      // Get the validation function
+      userInteractions.inputText('ghp_valid_token');
+      await configureCommand?.callback();
+      
+      const inputBoxCall = (vscodeMock.window.showInputBox as any).mock.calls[0][0];
+      const validateInput = inputBoxCall.validateInput;
+
+      // Act & Assert
+      expect(validateInput('')).toBe('Token cannot be empty');
+      expect(validateInput('   ')).toBe('Token cannot be empty');
+      expect(validateInput('invalid_token')).toBe('Token should start with ghp_ or github_pat_');
+      expect(validateInput('ghp_valid_token')).toBeNull();
+      expect(validateInput('github_pat_valid_token')).toBeNull();
+    });
+
+    it('should configure token successfully', async () => {
+      // Arrange
+      const token = 'ghp_test_token_123456789';
+      userInteractions.inputText(token);
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const configureCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.configureGitHubToken');
+
+      // Act
+      await configureCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showInformationMessage).toHaveBeenCalledWith('GitHub token configured successfully');
+      expect(mockProvider.refresh).toHaveBeenCalled();
+    });
+
+    it('should handle token input cancellation', async () => {
+      // Arrange
+      userInteractions.cancelDialog();
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const configureCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.configureGitHubToken');
+
+      // Act
+      await configureCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showInformationMessage).not.toHaveBeenCalled();
+      expect(mockProvider.refresh).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('clearGitHubToken command handler', () => {
+    it('should show confirmation dialog', async () => {
+      // Arrange
+      userInteractions.confirmAction('Clear Token');
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const clearCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.clearGitHubToken');
+
+      // Act
+      await clearCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showWarningMessage).toHaveBeenCalledWith(
+        'Are you sure you want to clear the GitHub token?',
+        { modal: true },
+        'Clear Token'
+      );
+    });
+
+    it('should clear token when confirmed', async () => {
+      // Arrange
+      userInteractions.confirmAction('Clear Token');
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const clearCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.clearGitHubToken');
+
+      // Act
+      await clearCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showInformationMessage).toHaveBeenCalledWith('GitHub token cleared');
+      expect(mockProvider.refresh).toHaveBeenCalled();
+    });
+
+    it('should not clear token when cancelled', async () => {
+      // Arrange
+      userInteractions.cancelDialog();
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const clearCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.clearGitHubToken');
+
+      // Act
+      await clearCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showInformationMessage).not.toHaveBeenCalledWith('GitHub token cleared');
+      expect(mockProvider.refresh).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('clearCache command handler', () => {
+    it('should clear cache and show success message', async () => {
+      // Arrange
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const clearCacheCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.clearCache');
+
+      // Act
+      await clearCacheCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showInformationMessage).toHaveBeenCalledWith('Cache cleared successfully');
+      expect(mockProvider.refresh).toHaveBeenCalled();
+    });
+  });
+
+  describe('switchToLocalMode command handler', () => {
+    it('should show folder selection dialog', async () => {
+      // Arrange
+      userInteractions.selectFolder('/test/local/templates');
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const switchCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.switchToLocalMode');
+
+      // Act
+      await switchCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showOpenDialog).toHaveBeenCalledWith({
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+        openLabel: 'Select Local Templates Directory'
+      });
+    });
+
+    it('should configure local mode when folder selected', async () => {
+      // Arrange
+      const selectedPath = '/test/local/templates';
+      
+      // Clear all mocks to ensure clean state
+      vi.clearAllMocks();
+      testHelpers.reset();
+      
+      // Set up configuration mock to handle multiple update calls
+      setupConfiguration({});
+      
+      // Override the configuration mock to ensure update calls succeed
+      const mockConfig = {
+        get: vi.fn().mockReturnValue(undefined),
+        update: vi.fn().mockResolvedValue(undefined), // Both config updates should succeed
+        has: vi.fn().mockReturnValue(false),
+        inspect: vi.fn().mockReturnValue(undefined)
+      };
+      vscodeMock.workspace.getConfiguration.mockReturnValue(mockConfig);
+      
+      // Clear any previous mock setups and set up fresh mock
+      vscodeMock.window.showOpenDialog.mockReset();
+      vscodeMock.window.showOpenDialog.mockResolvedValue([
+        { fsPath: selectedPath, scheme: 'file', authority: '', path: selectedPath, query: '', fragment: '' }
+      ]);
+      
+      // Ensure showInformationMessage is properly mocked
+      vscodeMock.window.showInformationMessage.mockReset();
+      vscodeMock.window.showInformationMessage.mockResolvedValue(undefined);
+      
+      // Re-setup the provider mock after clearing
+      const MockedSteeringTemplateProvider = SteeringTemplateProvider as any;
+      MockedSteeringTemplateProvider.mockClear();
+      mockProvider = {
+        refresh: vi.fn(),
+        loadTemplate: vi.fn().mockResolvedValue(undefined),
+        getTreeItem: vi.fn(),
+        getChildren: vi.fn().mockResolvedValue([])
+      };
+      MockedSteeringTemplateProvider.mockImplementation(() => mockProvider);
+      
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const switchCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.switchToLocalMode');
+
+      // Ensure the command exists
+      expect(switchCommand).toBeDefined();
+
+      // Act
+      await switchCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showOpenDialog).toHaveBeenCalled();
+      expect(vscodeMock.window.showInformationMessage).toHaveBeenCalledWith('Switched to local mode');
+      expect(mockProvider.refresh).toHaveBeenCalled();
+      
+      // Verify both configuration updates were called
+      expect(mockConfig.update).toHaveBeenCalledWith('templatesPath', selectedPath, vscode.ConfigurationTarget.Global);
+    });
+
+    it('should handle folder selection cancellation', async () => {
+      // Arrange
+      userInteractions.cancelDialog();
+      setupConfiguration({});
+      activate(mockContext);
+      const registeredCommands = getRegisteredCommands();
+      const switchCommand = registeredCommands.find(cmd => cmd.command === 'kiroSteeringLoader.switchToLocalMode');
+
+      // Act
+      await switchCommand?.callback();
+
+      // Assert
+      expect(vscodeMock.window.showInformationMessage).not.toHaveBeenCalledWith('Switched to local mode');
+      expect(mockProvider.refresh).not.toHaveBeenCalled();
+    });
   });
 });
 

@@ -9,8 +9,11 @@ import { vi, type MockedFunction } from 'vitest';
 export interface MockedVSCodeWindow {
   showInformationMessage: MockedFunction<typeof vscode.window.showInformationMessage>;
   showErrorMessage: MockedFunction<typeof vscode.window.showErrorMessage>;
+  showWarningMessage: MockedFunction<typeof vscode.window.showWarningMessage>;
+  showInputBox: MockedFunction<typeof vscode.window.showInputBox>;
   showOpenDialog: MockedFunction<typeof vscode.window.showOpenDialog>;
   registerTreeDataProvider: MockedFunction<typeof vscode.window.registerTreeDataProvider>;
+  createOutputChannel: MockedFunction<typeof vscode.window.createOutputChannel>;
 }
 
 export interface MockedVSCodeCommands {
@@ -165,6 +168,50 @@ export class MockDisposable implements vscode.Disposable {
   }
 }
 
+// Mock OutputChannel
+export class MockOutputChannel implements vscode.OutputChannel {
+  public readonly name: string;
+  private _content: string[] = [];
+
+  constructor(name: string) {
+    this.name = name;
+  }
+
+  append(value: string): void {
+    this._content.push(value);
+  }
+
+  appendLine(value: string): void {
+    this._content.push(value + '\n');
+  }
+
+  clear(): void {
+    this._content = [];
+  }
+
+  show(preserveFocus?: boolean): void;
+  show(column?: vscode.ViewColumn, preserveFocus?: boolean): void;
+  show(_columnOrPreserveFocus?: vscode.ViewColumn | boolean, _preserveFocus?: boolean): void {
+    // Mock implementation - does nothing
+  }
+
+  hide(): void {
+    // Mock implementation - does nothing
+  }
+
+  dispose(): void {
+    this._content = [];
+  }
+
+  replace(value: string): void {
+    this._content = [value];
+  }
+
+  getContent(): string {
+    return this._content.join('');
+  }
+}
+
 // Enums
 export const TreeItemCollapsibleState = {
   None: 0,
@@ -189,8 +236,11 @@ export const createVSCodeMock = () => {
   const mockWindow: MockedVSCodeWindow = {
     showInformationMessage: vi.fn().mockResolvedValue(undefined),
     showErrorMessage: vi.fn().mockResolvedValue(undefined),
+    showWarningMessage: vi.fn().mockResolvedValue(undefined),
+    showInputBox: vi.fn().mockResolvedValue(undefined),
     showOpenDialog: vi.fn().mockResolvedValue(undefined),
-    registerTreeDataProvider: vi.fn().mockReturnValue(new MockDisposable())
+    registerTreeDataProvider: vi.fn().mockReturnValue(new MockDisposable()),
+    createOutputChannel: vi.fn().mockImplementation((name: string) => new MockOutputChannel(name))
   };
 
   const mockCommands: MockedVSCodeCommands = {

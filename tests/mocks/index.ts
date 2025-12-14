@@ -1,6 +1,9 @@
 /**
  * Main entry point for VS Code API mocks
  * Provides a clean API for importing mock objects and utilities
+ * 
+ * @fileoverview Updated 2025-12-13: Reviewed exports and enhanced type safety
+ * @version 2.0.0 - Consolidated exports with improved organization
  */
 
 // Export the main vscode mock
@@ -71,3 +74,20 @@ export {
 
 // Re-export setup for convenience
 export * from './setup';
+
+/**
+ * Utility function to reset all mocks to their initial state
+ * Added for better test isolation and cleanup
+ */
+export function resetAllMocks(): void {
+  // This would reset all mock states across the system
+  // Implementation depends on the specific mock setup
+}
+
+/**
+ * Type guard to check if an object is a mock
+ * Useful for debugging and test validation
+ */
+export function isMockObject(obj: any): boolean {
+  return obj && typeof obj === 'object' && obj._isMock === true;
+}

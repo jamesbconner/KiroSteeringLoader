@@ -1,5 +1,6 @@
-# Kiro Steering Docs
-.kiro
+# Kiro IDE Configuration and User Data
+# Exclude the entire .kiro directory (contains user-specific settings, specs, and steering files)
+.kiro/
 
 # Node Modules
 node_modules
@@ -11,6 +12,13 @@ build/
 out/
 *.tsbuildinfo
 *.d.ts.map
+
+# VSIX packages (build artifacts)
+*.vsix
+
+# Test output files
+test-output.txt
+tests/reports/
 
 # TypeScript Cache
 *.tscache
@@ -142,3 +150,8 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# Zip files
+*.zip
+*.rar
+*.7zip
+*.7z

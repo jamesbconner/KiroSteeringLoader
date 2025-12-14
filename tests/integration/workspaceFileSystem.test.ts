@@ -324,7 +324,9 @@ describe('Workspace and File System Integration Tests', () => {
 
       // Assert
       expect(vscodeMock.window.showErrorMessage).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to load template:')
+        'ENOENT: no such file or directory, open \'/test/templates/nonexistent-template.md\'',
+        'Retry',
+        'View Output'
       );
       expect(vscodeMock.window.showInformationMessage).not.toHaveBeenCalled();
     });
@@ -344,8 +346,11 @@ describe('Workspace and File System Integration Tests', () => {
       await provider.loadTemplate(`${templatesPath}/template1.md`);
 
       // Assert
+      // The new ErrorHandler service shows structured error messages with action buttons
       expect(vscodeMock.window.showErrorMessage).toHaveBeenCalledWith(
-        `Failed to load template: ${readError}`
+        'Permission denied reading file',
+        'Retry',
+        'View Output'
       );
     });
 
@@ -364,8 +369,11 @@ describe('Workspace and File System Integration Tests', () => {
       await provider.loadTemplate(`${templatesPath}/template1.md`);
 
       // Assert
+      // The new ErrorHandler service shows structured error messages with action buttons
       expect(vscodeMock.window.showErrorMessage).toHaveBeenCalledWith(
-        `Failed to load template: ${writeError}`
+        'Disk full',
+        'Retry',
+        'View Output'
       );
     });
 
@@ -384,8 +392,11 @@ describe('Workspace and File System Integration Tests', () => {
       await provider.loadTemplate(`${templatesPath}/template1.md`);
 
       // Assert
+      // The new ErrorHandler service shows structured error messages with action buttons
       expect(vscodeMock.window.showErrorMessage).toHaveBeenCalledWith(
-        `Failed to load template: ${permissionError}`
+        'Permission denied creating directory',
+        'Retry',
+        'View Output'
       );
     });
 

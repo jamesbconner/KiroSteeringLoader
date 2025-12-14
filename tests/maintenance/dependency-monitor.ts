@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { extractJsonFromOutput } from './utils/json-extractor';
 
 interface DependencyUpdate {
   name: string;
@@ -49,7 +50,15 @@ export class DependencyMonitor {
         return [];
       }
       
-      const outdated = JSON.parse(outdatedOutput);
+      // Extract JSON from the command output using robust parser
+      const extraction = extractJsonFromOutput(outdatedOutput);
+      
+      if (!extraction.success) {
+        console.warn(`Failed to parse npm outdated output: ${extraction.error}`);
+        return [];
+      }
+      
+      const outdated = extraction.data;
       const updates: DependencyUpdate[] = [];
       
       for (const [name, info] of Object.entries(outdated as any)) {
@@ -86,7 +95,15 @@ export class DependencyMonitor {
         stdio: ['pipe', 'pipe', 'ignore'],
       });
       
-      const audit = JSON.parse(auditOutput);
+      // Extract JSON from the command output using robust parser
+      const extraction = extractJsonFromOutput(auditOutput);
+      
+      if (!extraction.success) {
+        console.warn(`Failed to parse npm audit output: ${extraction.error}`);
+        return [];
+      }
+      
+      const audit = extraction.data;
       const vulnerabilities: SecurityVulnerability[] = [];
       
       if (audit.vulnerabilities) {

@@ -265,8 +265,57 @@ export const createFileSystemMock = (): MockedFileSystem => ({
   rmSync: mockRmSync
 });
 
-// Default export for easier importing
-export const mockFs = createFileSystemMock();
+// Create the default mock instance
+const mockFs = createFileSystemMock();
+
+// Export as default for vi.mock compatibility
+export default mockFs;
+
+// Also export as named export for direct imports
+export { mockFs };
+
+// Export promises API for fs/promises compatibility
+export const promises = {
+  readFile: vi.fn().mockImplementation(async (path: string, encoding?: BufferEncoding) => {
+    return mockFs.readFileSync(path, encoding);
+  }),
+  writeFile: vi.fn().mockImplementation(async (path: string, data: string) => {
+    return mockFs.writeFileSync(path, data);
+  }),
+  mkdir: vi.fn().mockImplementation(async (path: string, options?: { recursive?: boolean }) => {
+    return mockFs.mkdirSync(path, options);
+  }),
+  readdir: vi.fn().mockImplementation(async (path: string) => {
+    return mockFs.readdirSync(path);
+  }),
+  rm: vi.fn().mockImplementation(async (path: string, options?: { recursive?: boolean; force?: boolean }) => {
+    return mockFs.rmSync(path, options);
+  }),
+  access: vi.fn().mockImplementation(async (path: string, mode?: number) => {
+    const normalized = normalizePath(path);
+    if (!fileExists(normalized) && !directoryExists(normalized)) {
+      throw new Error(`ENOENT: no such file or directory, access '${path}'`);
+    }
+  }),
+  stat: vi.fn().mockImplementation(async (path: string) => {
+    const normalized = normalizePath(path);
+    if (directoryExists(normalized)) {
+      return { isDirectory: () => true, isFile: () => false };
+    }
+    if (fileExists(normalized)) {
+      return { isDirectory: () => false, isFile: () => true };
+    }
+    throw new Error(`ENOENT: no such file or directory, stat '${path}'`);
+  })
+};
+
+// Add constants for fs.constants compatibility
+export const constants = {
+  F_OK: 0,
+  R_OK: 4,
+  W_OK: 2,
+  X_OK: 1
+};
 
 /**
  * File system mock utilities for test setup and management

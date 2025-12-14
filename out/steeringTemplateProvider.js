@@ -1,70 +1,176 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SteeringTemplateProvider = void 0;
-const vscode = __importStar(require("vscode"));
-const fs = __importStar(require("fs"));
-const path = __importStar(require("path"));
-class SteeringTemplateProvider {
-    constructor(context) {
+import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+import { ConfigurationService } from './services/ConfigurationService';
+import { GitHubRepositoryService } from './services/GitHubRepositoryService';
+import { CacheManager } from './services/CacheManager';
+import { FileSystemService } from './services/FileSystemService';
+import { ErrorHandler } from './services/ErrorHandler';
+import { buildTreeStructure } from './utils/treeBuilder';
+import { formatConfigurationSource, generateTooltip } from './utils/displayUtils';
+import { GitHubSteeringError } from './errors';
+export class SteeringTemplateProvider {
+    constructor(context, configService, githubService, cacheManager, fileSystemService, errorHandler) {
         this.context = context;
+        this.configService = configService;
+        this.githubService = githubService;
+        this.cacheManager = cacheManager;
+        this.fileSystemService = fileSystemService;
+        this.errorHandler = errorHandler;
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+        this.lastFetchTime = null;
+        this.cacheStatus = 'none';
+        // Initialize services if not provided (for backward compatibility)
+        if (!this.configService) {
+            this.configService = new ConfigurationService(context);
+        }
+        if (!this.githubService) {
+            this.githubService = new GitHubRepositoryService();
+        }
+        if (!this.cacheManager) {
+            this.cacheManager = new CacheManager(context);
+        }
+        if (!this.fileSystemService) {
+            this.fileSystemService = new FileSystemService();
+        }
+        if (!this.errorHandler) {
+            this.errorHandler = new ErrorHandler();
+        }
     }
-    refresh() {
+    refresh(forceRefresh = false) {
+        if (forceRefresh && this.cacheManager) {
+            // Clear cache on force refresh
+            const repoConfig = this.configService?.getRepositoryConfig();
+            if (repoConfig) {
+                const cacheKey = `${repoConfig.owner}/${repoConfig.repo}${repoConfig.path ? `/${repoConfig.path}` : ''}`;
+                this.cacheManager.invalidateCache(cacheKey);
+            }
+        }
         this._onDidChangeTreeData.fire();
     }
     getTreeItem(element) {
         return element;
     }
-    getChildren(element) {
+    async getChildren(element) {
         if (!element) {
-            return Promise.resolve(this.getTemplateItems());
+            return this.getTemplateItems();
         }
-        return Promise.resolve([]);
+        // Handle directory expansion
+        if (element.itemType === 'directory' && element.children) {
+            return element.children;
+        }
+        return [];
     }
-    getTemplateItems() {
-        const config = vscode.workspace.getConfiguration('kiroSteeringLoader');
-        const templatesPath = config.get('templatesPath');
+    async getTemplateItems() {
+        try {
+            const configSource = this.configService.getConfigurationSource();
+            this.errorHandler.logInfo('Fetching templates', { source: configSource });
+            // Add configuration source indicator
+            const sourceIndicator = this.createSourceIndicator(configSource);
+            if (configSource === 'github') {
+                return this.getGitHubTemplates(sourceIndicator);
+            }
+            else if (configSource === 'local') {
+                return this.getLocalTemplates(sourceIndicator);
+            }
+            else {
+                return [
+                    sourceIndicator,
+                    new TemplateItem('Click to configure GitHub repository', '', vscode.TreeItemCollapsibleState.None, 'github-setup', undefined)
+                ];
+            }
+        }
+        catch (error) {
+            this.errorHandler.handleError(error, {
+                operation: 'Fetch templates',
+                details: { source: this.configService.getConfigurationSource() }
+            });
+            return this.handleError(error);
+        }
+    }
+    createSourceIndicator(source) {
+        const repoConfig = this.configService.getRepositoryConfig();
+        const localPath = this.configService.getLocalTemplatesPath();
+        const sourceText = formatConfigurationSource(source, {
+            owner: repoConfig?.owner,
+            repo: repoConfig?.repo,
+            path: repoConfig?.path,
+            localPath: localPath || undefined
+        });
+        let statusText = '';
+        if (source === 'github' && this.lastFetchTime) {
+            const timeSince = Math.floor((Date.now() - this.lastFetchTime.getTime()) / 1000);
+            const timeStr = timeSince < 60 ? `${timeSince}s ago` : `${Math.floor(timeSince / 60)}m ago`;
+            statusText = ` • Last fetch: ${timeStr} • Cache: ${this.cacheStatus}`;
+        }
+        return new TemplateItem(`${sourceText}${statusText}`, '', vscode.TreeItemCollapsibleState.None, 'info', undefined);
+    }
+    async getGitHubTemplates(sourceIndicator) {
+        const repoConfig = this.configService.getRepositoryConfig();
+        if (!repoConfig) {
+            return [
+                sourceIndicator,
+                new TemplateItem('GitHub configuration error', '', vscode.TreeItemCollapsibleState.None, 'error', undefined)
+            ];
+        }
+        try {
+            // Set auth token if available
+            const token = await this.configService.getAuthToken();
+            if (token) {
+                this.githubService.setAuthToken(token);
+            }
+            // Check cache first
+            const cacheKey = `${repoConfig.owner}/${repoConfig.repo}${repoConfig.path ? `/${repoConfig.path}` : ''}`;
+            const cachedTemplates = this.cacheManager.getCachedTemplates(cacheKey);
+            let templates;
+            if (cachedTemplates && this.cacheManager.isCacheFresh(cacheKey)) {
+                templates = cachedTemplates;
+                this.cacheStatus = 'fresh';
+            }
+            else {
+                // Fetch from GitHub
+                templates = await this.githubService.fetchTemplates(repoConfig.owner, repoConfig.repo, repoConfig.path, repoConfig.branch);
+                // Cache the results
+                this.cacheManager.setCachedTemplates(cacheKey, templates);
+                this.lastFetchTime = new Date();
+                this.cacheStatus = 'fresh';
+            }
+            if (templates.length === 0) {
+                return [
+                    sourceIndicator,
+                    new TemplateItem('No templates found in repository', '', vscode.TreeItemCollapsibleState.None, 'info', undefined)
+                ];
+            }
+            // Build hierarchical tree structure
+            const tree = buildTreeStructure(templates);
+            const treeItems = this.convertTreeToItems(tree);
+            return [sourceIndicator, ...treeItems];
+        }
+        catch (error) {
+            if (error instanceof GitHubSteeringError) {
+                return [
+                    sourceIndicator,
+                    new TemplateItem(error.userMessage || error.message, '', vscode.TreeItemCollapsibleState.None, 'error', undefined),
+                    new TemplateItem('Click to reconfigure', '', vscode.TreeItemCollapsibleState.None, 'github-setup', undefined)
+                ];
+            }
+            throw error;
+        }
+    }
+    getLocalTemplates(sourceIndicator) {
+        const templatesPath = this.configService.getLocalTemplatesPath();
         if (!templatesPath) {
-            return [new TemplateItem('Click to set templates path', '', vscode.TreeItemCollapsibleState.None, 'setup')];
+            return [
+                sourceIndicator,
+                new TemplateItem('Local path not configured', '', vscode.TreeItemCollapsibleState.None, 'error', undefined)
+            ];
         }
         if (!fs.existsSync(templatesPath)) {
             return [
-                new TemplateItem('Templates path not found', '', vscode.TreeItemCollapsibleState.None, 'error'),
-                new TemplateItem('Click to set new path', '', vscode.TreeItemCollapsibleState.None, 'setup')
+                sourceIndicator,
+                new TemplateItem('Templates path not found', '', vscode.TreeItemCollapsibleState.None, 'error', undefined),
+                new TemplateItem('Click to set new path', '', vscode.TreeItemCollapsibleState.None, 'setup', undefined)
             ];
         }
         try {
@@ -72,24 +178,46 @@ class SteeringTemplateProvider {
             const templateFiles = files.filter(file => file.endsWith('.md'));
             if (templateFiles.length === 0) {
                 return [
-                    new TemplateItem('No .md template files found', '', vscode.TreeItemCollapsibleState.None, 'info'),
-                    new TemplateItem(`Path: ${templatesPath}`, '', vscode.TreeItemCollapsibleState.None, 'info')
+                    sourceIndicator,
+                    new TemplateItem('No .md template files found', '', vscode.TreeItemCollapsibleState.None, 'info', undefined),
+                    new TemplateItem(`Path: ${templatesPath}`, '', vscode.TreeItemCollapsibleState.None, 'info', undefined)
                 ];
             }
-            return templateFiles.map(file => {
+            const items = templateFiles.map(file => {
                 const fullPath = path.join(templatesPath, file);
-                return new TemplateItem(path.basename(file, '.md'), fullPath, vscode.TreeItemCollapsibleState.None, 'template');
+                return new TemplateItem(path.basename(file, '.md'), fullPath, vscode.TreeItemCollapsibleState.None, 'template', undefined);
             });
+            return [sourceIndicator, ...items];
         }
         catch (error) {
             return [
-                new TemplateItem('Error reading templates directory', '', vscode.TreeItemCollapsibleState.None, 'error'),
-                new TemplateItem('Click to set new path', '', vscode.TreeItemCollapsibleState.None, 'setup')
+                sourceIndicator,
+                new TemplateItem('Error reading templates directory', '', vscode.TreeItemCollapsibleState.None, 'error', undefined),
+                new TemplateItem('Click to set new path', '', vscode.TreeItemCollapsibleState.None, 'setup', undefined)
             ];
         }
     }
-    async loadTemplate(templatePath) {
-        if (!templatePath || !templatePath.trim()) {
+    convertTreeToItems(nodes) {
+        return nodes.map(node => {
+            if (node.type === 'directory') {
+                const children = this.convertTreeToItems(node.children);
+                return new TemplateItem(node.name, '', children.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None, 'directory', undefined, children);
+            }
+            else {
+                const metadata = node.metadata;
+                return new TemplateItem(metadata.name, metadata.downloadUrl, vscode.TreeItemCollapsibleState.None, 'template', metadata);
+            }
+        });
+    }
+    handleError(error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        return [
+            new TemplateItem('Error loading templates', '', vscode.TreeItemCollapsibleState.None, 'error', undefined),
+            new TemplateItem(errorMessage, '', vscode.TreeItemCollapsibleState.None, 'info', undefined)
+        ];
+    }
+    async loadTemplate(templatePathOrUrl, metadata) {
+        if (!templatePathOrUrl || !templatePathOrUrl.trim()) {
             vscode.window.showErrorMessage('No template path provided');
             return;
         }
@@ -99,40 +227,82 @@ class SteeringTemplateProvider {
             return;
         }
         try {
-            const steeringDir = path.join(workspaceFolder.uri.fsPath, '.kiro', 'steering');
-            // Ensure .kiro/steering directory exists
-            if (!fs.existsSync(steeringDir)) {
-                fs.mkdirSync(steeringDir, { recursive: true });
+            let content;
+            let filename;
+            // Determine if this is a GitHub URL or local path
+            if (templatePathOrUrl.startsWith('http')) {
+                // GitHub template
+                this.errorHandler.logInfo('Loading template from GitHub', {
+                    url: templatePathOrUrl,
+                    filename: metadata?.filename
+                });
+                content = await this.githubService.fetchFileContent(templatePathOrUrl);
+                filename = metadata?.filename || path.basename(templatePathOrUrl);
             }
-            // Read template content
-            const templateContent = fs.readFileSync(templatePath, 'utf8');
-            const templateName = path.basename(templatePath);
-            const targetPath = path.join(steeringDir, templateName);
-            // Write template to steering directory
-            fs.writeFileSync(targetPath, templateContent);
-            vscode.window.showInformationMessage(`Template "${templateName}" loaded successfully`);
+            else {
+                // Local template
+                this.errorHandler.logInfo('Loading template from local filesystem', {
+                    path: templatePathOrUrl
+                });
+                content = fs.readFileSync(templatePathOrUrl, 'utf8');
+                filename = path.basename(templatePathOrUrl);
+            }
+            // Use FileSystemService to load the template
+            const result = await this.fileSystemService.loadTemplate(content, filename, workspaceFolder.uri.fsPath);
+            if (result.success) {
+                this.errorHandler.logInfo('Template loaded successfully', {
+                    filename,
+                    filepath: result.filepath
+                });
+                vscode.window.showInformationMessage(`Template "${filename}" loaded successfully`);
+            }
+            else {
+                // Log error and let ErrorHandler show the notification
+                this.errorHandler.handleError(new Error(result.error || 'Failed to load template'), {
+                    operation: 'Load template',
+                    details: { filename }
+                }, { showNotification: true });
+            }
         }
         catch (error) {
-            vscode.window.showErrorMessage(`Failed to load template: ${error}`);
+            // Log error and let ErrorHandler show the notification
+            this.errorHandler.handleError(error, {
+                operation: 'Load template',
+                details: {
+                    templatePath: templatePathOrUrl,
+                    filename: metadata?.filename
+                }
+            }, { showNotification: true });
         }
     }
 }
-exports.SteeringTemplateProvider = SteeringTemplateProvider;
 class TemplateItem extends vscode.TreeItem {
-    constructor(label, templatePath, collapsibleState, itemType) {
+    constructor(label, templatePath, collapsibleState, itemType, metadata, children) {
         super(label, collapsibleState);
         this.label = label;
         this.templatePath = templatePath;
         this.collapsibleState = collapsibleState;
         this.itemType = itemType;
+        this.metadata = metadata;
+        this.children = children;
         if (itemType === 'template') {
-            this.tooltip = `Load template: ${this.label}`;
+            if (metadata) {
+                this.tooltip = generateTooltip(metadata);
+            }
+            else {
+                this.tooltip = `Load template: ${this.label}`;
+            }
             this.command = {
                 command: 'kiroSteeringLoader.loadTemplate',
                 title: 'Load Template',
-                arguments: [templatePath]
+                arguments: [templatePath, metadata]
             };
             this.iconPath = new vscode.ThemeIcon('file-text');
+        }
+        else if (itemType === 'directory') {
+            this.tooltip = `Directory: ${this.label}`;
+            this.iconPath = new vscode.ThemeIcon('folder');
+            this.contextValue = 'directory';
         }
         else if (itemType === 'setup') {
             this.tooltip = 'Click to configure templates directory';
@@ -141,6 +311,14 @@ class TemplateItem extends vscode.TreeItem {
                 title: 'Set Templates Path'
             };
             this.iconPath = new vscode.ThemeIcon('folder-opened');
+        }
+        else if (itemType === 'github-setup') {
+            this.tooltip = 'Click to configure GitHub repository';
+            this.command = {
+                command: 'kiroSteeringLoader.configureGitHubRepository',
+                title: 'Configure GitHub Repository'
+            };
+            this.iconPath = new vscode.ThemeIcon('github');
         }
         else if (itemType === 'info') {
             this.iconPath = new vscode.ThemeIcon('info');

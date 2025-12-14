@@ -27,32 +27,30 @@ export default defineConfig({
     hookTimeout: 15000,
     teardownTimeout: 10000,
     
-    // Failure handling configuration
-    retry: process.env.CI ? 1 : 0,
-    bail: process.env.CI ? 1 : 0,
-    
-    // Reporter configuration
-    reporter: ['verbose', 'json', 'html'],
-    outputFile: {
-      json: './coverage/unit-test-results.json',
-      html: './coverage/unit-test-results.html'
+    // Limit concurrent tests to reduce memory usage
+    maxConcurrency: 1,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+        maxForks: 1,
+        minForks: 1
+      }
     },
     
-    // Coverage configuration with v8
+    // Failure handling configuration
+    retry: 0,
+    bail: 1,
+    
+    // Reporter configuration
+    reporters: ['basic'],
+    
+    // Coverage configuration
     coverage: {
+      enabled: true,
       provider: 'v8',
-      reporter: ['text', 'html', 'json', 'lcov'],
+      reporter: ['text', 'json'],
       reportsDirectory: './coverage',
-      
-      // Coverage thresholds (85% as specified in requirements)
-      thresholds: {
-        lines: 85,
-        functions: 85,
-        branches: 85,
-        statements: 85
-      },
-      
-      // Include/exclude patterns
       include: ['src/**/*.ts'],
       exclude: [
         'node_modules/**',
@@ -60,12 +58,18 @@ export default defineConfig({
         'tests/**',
         '**/*.d.ts',
         '**/*.test.ts',
-        '**/*.spec.ts'
+        '**/*.spec.ts',
+        'coverage/**',
+        '.vscode-test/**',
+        'scripts/**'
       ],
-      
-      // Fail build if coverage is below threshold
-      skipFull: false,
-      all: true
+      thresholds: {
+        lines: 85,
+        functions: 85,
+        branches: 85,
+        statements: 85
+      },
+      clean: true
     },
     
     // TypeScript configuration

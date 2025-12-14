@@ -54,6 +54,14 @@ afterAll(async () => {
     // Handler might not be initialized if no failures occurred
   }
   
+  // Remove error handlers to prevent memory leaks
+  if (unhandledRejectionHandler) {
+    process.removeListener('unhandledRejection', unhandledRejectionHandler);
+  }
+  if (uncaughtExceptionHandler) {
+    process.removeListener('uncaughtException', uncaughtExceptionHandler);
+  }
+  
   // Clean up global test resources
   console.log('🧹 Cleaning up test environment...');
 });
@@ -69,15 +77,25 @@ afterEach(() => {
 });
 
 // Global error handling for tests
-process.on('unhandledRejection', (reason, promise) => {
+let unhandledRejectionHandler: (reason: any, promise: Promise<any>) => void;
+let uncaughtExceptionHandler: (error: Error) => void;
+
+// Set up error handlers
+unhandledRejectionHandler = (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   // Don't exit the process in tests, let the test framework handle it
-});
+};
 
-process.on('uncaughtException', (error) => {
+uncaughtExceptionHandler = (error) => {
   console.error('Uncaught Exception:', error);
   // Don't exit the process in tests, let the test framework handle it
-});
+};
+
+// Increase max listeners to prevent warnings
+process.setMaxListeners(50);
+
+process.on('unhandledRejection', unhandledRejectionHandler);
+process.on('uncaughtException', uncaughtExceptionHandler);
 
 // Export test utilities that can be used across tests
 export const testUtils = {

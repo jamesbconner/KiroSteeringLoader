@@ -4,7 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { MockEventEmitter, TreeItemCollapsibleState } from '../mocks/vscode';
+import '../mocks/setup'; // Import mock setup first
+import { vscode, MockEventEmitter, TreeItemCollapsibleState } from '../mocks/setup';
 
 // Mock the modules first (hoisted)
 vi.mock('vscode', () => ({
@@ -99,11 +100,8 @@ const createTemplateItem = (
 };
 
 describe('TemplateItem', () => {
-  let mockVSCode: any;
-
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockVSCode = await vi.importMock('vscode');
   });
 
   describe('Constructor', () => {

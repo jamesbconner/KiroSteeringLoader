@@ -4,17 +4,15 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import '../mocks/setup'; // Import mock setup first
+import { vscode } from '../mocks/setup'; // Import the shared mock
 import { SteeringTemplateProvider } from '../../src/steeringTemplateProvider';
 
 describe('Debug loadTemplate', () => {
   let provider: SteeringTemplateProvider;
   let mockContext: any;
-  let mockVSCode: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    
-    mockVSCode = await vi.importMock('vscode');
     
     mockContext = {
       subscriptions: [],
@@ -31,7 +29,7 @@ describe('Debug loadTemplate', () => {
     await provider.loadTemplate('');
 
     // Assert
-    expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
+    expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
   });
 
   it('should call showErrorMessage for undefined', async () => {
@@ -39,6 +37,6 @@ describe('Debug loadTemplate', () => {
     await provider.loadTemplate(undefined as any);
 
     // Assert
-    expect(mockVSCode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
+    expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('No template path provided');
   });
 });
